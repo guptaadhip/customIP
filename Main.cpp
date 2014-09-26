@@ -13,7 +13,6 @@ RouteTable routeTable;
 
 static void callbackHandler(u_char *args, const struct pcap_pkthdr* pkthdr,
                                                         const u_char* packet) {
-  
   u_int caplen = pkthdr->caplen; 
   u_int length = pkthdr->len;
   const struct ethernetHeader *ethernet;
@@ -23,9 +22,12 @@ static void callbackHandler(u_char *args, const struct pcap_pkthdr* pkthdr,
   ethernetType = ntohs(ethernet->ethType);
   if (ethernetType == ethTypeIp) {
     ip = (struct ipHeader *) (packet + ETHERNET_HEADER_LEN);
-    cout << "Source Host: " << inet_ntoa(ip->ipSrc)
-         << " Destination Host: " << inet_ntoa(ip->ipDst)
-         << std::endl;
+    /* ICMP Packet Proto */
+    if (ip->ipProto == icmpProto) {
+      cout << "Source Host: " << inet_ntoa(ip->ipSrc)
+           << " Destination Host: " << inet_ntoa(ip->ipDst)
+           << std::endl;
+    }
   }
 }
 

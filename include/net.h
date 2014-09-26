@@ -18,6 +18,7 @@ struct ethernetHeader {
 
 static const uint32_t ethTypeIp = 0x0800;
 static const uint32_t ethTypeArp = 0x0806;
+static const u_char icmpProto = 0x1;
 
 /* IP header */
 struct ipHeader {
@@ -60,4 +61,14 @@ struct tcpHeader {
   u_short window;
   u_short checksum;
 	u_short urgPointer;
+};
+
+struct icmpHeader
+{
+  u_char type;
+  u_char code;
+  
+  u_short checksum;
+  u_short identifier;
+  u_short seqNum;
 };
