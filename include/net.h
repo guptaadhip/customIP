@@ -21,10 +21,10 @@ static const uint32_t ethTypeArp = 0x0806;
 
 /* IP header */
 struct ipHeader {
-  static const uint32_t IP_RF = 0x8000;		/* reserved fragment flag */
-  static const uint32_t IP_DF = 0x4000;		/* dont fragment flag */
-  static const uint32_t IP_MF = 0x2000;		/* more fragments flag */
-  static const uint32_t IP_OFFMASK = 0x1fff;	/* mask for fragmenting bits */
+  static const uint32_t ipRf = 0x8000;		/* reserved fragment flag */
+  static const uint32_t ipDf = 0x4000;		/* dont fragment flag */
+  static const uint32_t ipMf = 0x2000;		/* more fragments flag */
+  static const uint32_t ipOffmask = 0x1fff;	/* mask for fragmenting bits */
   u_char ipVhl;
   u_char ipTos;
   u_short ipLen;
