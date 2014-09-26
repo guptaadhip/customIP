@@ -1,5 +1,5 @@
 all: 
-		g++ -o main RouteTable.cpp Main.cpp -std=c++11
+		g++ -o main RouteTable.cpp Sniffer.cpp Main.cpp -std=c++11 -lpcap
 
 clean:
 		rm -r main
