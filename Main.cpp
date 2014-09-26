@@ -1,9 +1,12 @@
 #include "include/RouteTable.h"
 #include "include/Sniffer.h"
-#include <net/ethernet.h>
+#include "include/net.h"
+#include <sys/socket.h>
+
 #include <iostream>
 
 using namespace std;
+
 
 /* global Route table */
 RouteTable routeTable;
@@ -13,13 +16,17 @@ static void callbackHandler(u_char *args, const struct pcap_pkthdr* pkthdr,
   
   u_int caplen = pkthdr->caplen; 
   u_int length = pkthdr->len;
-  struct ether_header *eptr;
-  u_short ether_type;
-  eptr = (struct ether_header *) packet;
-  ether_type = ntohs(eptr->ether_type);
-  cout << "Source Host: " << ether_ntoa((struct ether_addr*)eptr->ether_shost)
-  << " Destination Host: " << ether_ntoa((struct ether_addr*)eptr->ether_dhost)
-  << std::endl;
+  const struct ethernetHeader *ethernet;
+  const struct ipHeader *ip;
+  u_short ethernetType;
+  ethernet = (struct ethernetHeader *) packet;
+  ethernetType = ntohs(ethernet->ethType);
+  if (ethernetType == ethTypeIp) {
+    ip = (struct ipHeader *) (packet + ETHERNET_HEADER_LEN);
+    cout << "Source Host: " << inet_ntoa(ip->ipSrc)
+         << " Destination Host: " << inet_ntoa(ip->ipDst)
+         << std::endl;
+  }
 }
 
 int main() {
