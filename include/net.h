@@ -17,6 +17,7 @@ struct ethernetHeader {
 };
 
 static const uint32_t ethTypeIp = 0x0800;
+static const uint32_t ethTypeArp = 0x0806;
 
 /* IP header */
 struct ipHeader {
