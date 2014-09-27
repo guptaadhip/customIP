@@ -8,6 +8,10 @@ static const int ETHERNET_ADDRESS_LEN	= 6;
 /* Ethernet header is 14 bytes */
 static const int ETHERNET_HEADER_LEN = 14;
 
+static const int IP_HEADER_LEN = 20;
+static const int ICMP_HEADER_LEN = 8;
+
+
 enum class IcmpResponse : int {
 	ECHO_REPLY = 0,
 	DESTINATION_UNREACHABLE = 3,

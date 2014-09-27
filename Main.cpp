@@ -50,22 +50,19 @@ static void callbackHandler(u_char *args, const struct pcap_pkthdr* pkthdr,
         struct icmpHeader *icmp = (struct icmpHeader *) (packet + 
                                           ETHERNET_HEADER_LEN + ipHeaderLen);
         /* create the ICMP reply */
-        icmpHandler(icmp);
-        cout << "Made Request Need to send" << endl;
+        packetEngine.responsePacket(packet, IcmpResponse::ECHO_REPLY);
+        return;
       }
-      /*cout << "Source Host: " << inet_ntoa(ip->ipSrc)
-           << " Destination Host: " << inet_ntoa(ip->ipDst)
-           << " Type: "  << (int) icmp->type
-           << " Code: "  << (int) icmp->code
-           << " Identifier: "  << ntohs(icmp->identifier)
-           << " seqNum: "  << ntohs(icmp->seqNum)
-           << " Ip Header len: " << ipHeaderLen
-           << std::endl;*/
-    }else { // Packet should be forwarded 
+      
+    } else { // Packet should be forwarded
+      return;
       auto entry = routeTable.search(ip->ipDst.s_addr);
       if (entry == nullptr) {
+        cout << "I Got called 2" << endl;
         packetEngine.responsePacket(packet, IcmpResponse::DESTINATION_UNREACHABLE);
+        return;
       } else {
+        cout << "I Got called 3" << endl;
         packetEngine.forwardPacket(packet, entry->getNextHop());
       }
 		}

@@ -3,9 +3,31 @@
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#include <iostream>
 
+using namespace std;
+
+PacketEngine::PacketEngine() {
+	const int on = 1;
+	if ((socketFd_ = socket(AF_INET, SOCK_RAW, IPPROTO_ICMP)) == -1) {
+		cout << "Socket creation failed!" << endl;
+		exit(1);
+	}
+
+	/*
+   *  IP_HDRINCL must be set on the socket so that
+   *  the kernel does not attempt to automatically add
+   *  a default ip header to the packet
+   */
+	if (setsockopt(socketFd_, IPPROTO_IP, IP_HDRINCL, &on, sizeof(on)) < 0) {
+		cout << "Setting the socket option failed!" << endl;
+    exit(1);
+  }
+}
 void PacketEngine::forwardPacket(const u_char *packet, uint32_t nextHopAddr) {
 	struct ipHeader *ip = (struct ipHeader *) (packet + ETHERNET_HEADER_LEN);
+	struct sockaddr_in dest;
+	u_short ipLen = ntohs(ip->ipLen);
 
 	/* lets first check the TTL if 0 no point proceeding */
 	ip->ipTtl = ip->ipTtl - 1; // decrease TTL
@@ -15,33 +37,80 @@ void PacketEngine::forwardPacket(const u_char *packet, uint32_t nextHopAddr) {
 		return;
  	}
 
-	/* TBD: reach here means that the packet needs to be forwarded */
+ 	ip->ipChecksum = 0;
+  ip->ipChecksum = checksum ((uint16_t *) ip, IP_HEADER_LEN);
+
+	dest.sin_family = AF_INET;
+  dest.sin_addr.s_addr = nextHopAddr;
+
+	/*
+   *  now the packet is sent
+   */
+  auto rc = sendto(socketFd_, packet + ETHERNET_HEADER_LEN, ipLen, 0, 
+  											 (struct sockaddr *)&dest, sizeof(struct sockaddr));
+  if (rc < 0) {
+  	cout << "Forwarding Packet Failed!" << endl;
+    exit(1);
+  }
 
 }
 
-void PacketEngine::responsePacket(const u_char *packet, enum IcmpResponse) {
+void PacketEngine::responsePacket(const u_char *packet, IcmpResponse type) {
 	struct ipHeader *ip = (struct ipHeader *) (packet + ETHERNET_HEADER_LEN);
  	struct in_addr tempAddr;
+ 	struct ipHeader *tempIp;
+ 	struct sockaddr_in dest;
+ 	int socketFd;
+ 	u_short ipLen = ntohs(ip->ipLen);
+	u_char *tempPacket = (u_char *) malloc ((sizeof(u_char) * (ip->ipLen)));
 
-	ip->ipTtl = ip->ipTtl - 1; // decrease TTL
-	if (ip->ipTtl == 0) {
-		/* TBD: need to send what kind of a response should be sent */
-		responsePacket(packet, IcmpResponse::TIME_EXCEEDED);
-		return;
-	}
-	
-	tempAddr = ip->ipDst;
-	ip->ipDst = ip->ipSrc;
-	ip->ipSrc = tempAddr;
-	/* TBD: Entire IP Packet Logic */
-	
-	ip->ipTtl = 255; 
-	ip->ipChecksum = checksum((unsigned short *)ip, sizeof(struct ipHeader));		
+	/* Start IP Header Creation */
+	tempIp = (struct ipHeader *) malloc (IP_HEADER_LEN);
+  tempIp->ipVhl = IP_VHL(0x4, 0x5);
+  tempIp->ipTos = 0x0;
+  tempIp->ipLen = ipLen;
+  tempIp->ipId = htons(random());
+  tempIp->ipOffset = 0x0;
+  tempIp->ipTtl = 64;
+  tempIp->ipProto = icmpProto;
+  tempIp->ipSrc.s_addr = ip->ipDst.s_addr;
+  tempIp->ipDst.s_addr = ip->ipSrc.s_addr;
+  tempIp->ipChecksum = 0;
+  tempIp->ipChecksum = checksum ((uint16_t *) tempIp, IP_HEADER_LEN);
+	/* End IP Header Creation */
 
-	// TBD -  Create ICMP Header
+  /* copy IP Header to Place */
+  int datalen = ipLen - IP_HEADER_LEN - ICMP_HEADER_LEN;
+	memcpy(tempPacket, tempIp, IP_HEADER_LEN);
+	memcpy((tempPacket + IP_HEADER_LEN), 
+                        packet + ETHERNET_HEADER_LEN + IP_HEADER_LEN,
+                                          datalen + ICMP_HEADER_LEN);
+	/* Lets do the ICMP */
+	struct icmpHeader *icmp;
+	icmp = (struct icmpHeader *) (tempPacket + IP_HEADER_LEN);
+	icmp->type = (uint8_t) type;
+	icmp->code = 0;
+	icmp->checksum = 0;
+	icmp->checksum = checksum((uint16_t *) (tempPacket + IP_HEADER_LEN),
+                                          ICMP_HEADER_LEN + datalen);
+
+	/* Lets send the packet */
+	
+  memset(&dest, 0, sizeof(struct sockaddr_in));
+	dest.sin_family = AF_INET;
+  dest.sin_addr.s_addr = tempIp->ipDst.s_addr;
+  
+  /*
+   *  now the packet is sent
+   */
+  auto rc = sendto(socketFd_, tempPacket, ipLen, 0, (struct sockaddr *)&dest,
+                   sizeof(struct sockaddr));
+  if (rc < 0) {
+  	cout << "Sending the ICMP Response failed!" << endl;
+    exit(1);
+  }
 }
 
-// TBD - Produce wrong checksum
 unsigned short PacketEngine::checksum(unsigned short *addr, int len){ 
 	int nleft = len;
   int sum = 0;
