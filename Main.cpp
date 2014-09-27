@@ -22,6 +22,9 @@ void icmpHandler(struct icmpHeader *icmp) {
       /* Set type to 8 and respond back */
       icmp->type = 0;
       break;
+    case 0:
+      cout << "Got the value" << endl;
+      break;
   }
 }
 
