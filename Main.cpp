@@ -16,20 +16,6 @@ RouteTable routeTable;
 MyIp myIps;
 PacketEngine packetEngine;
 
-/* This is the ICMP Handler if the dst address is of self*/
-void icmpHandler(struct icmpHeader *icmp) {
-  int icmpType = (int) icmp->type;
-  switch (icmpType) {
-    case 8:
-      /* Set type to 8 and respond back */
-      icmp->type = 0;
-      break;
-    case 0:
-      cout << "Got the value" << endl;
-      break;
-  }
-}
-
 static void callbackHandler(u_char *args, const struct pcap_pkthdr* pkthdr,
                                                         const u_char* packet) {
   u_int caplen = pkthdr->caplen; 
