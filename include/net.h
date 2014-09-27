@@ -3,11 +3,17 @@
 #include <net/ethernet.h>
 #include <arpa/inet.h>
 
-
 /* Ethernet addresses are 6 bytes */
 static const int ETHERNET_ADDRESS_LEN	= 6;
 /* Ethernet header is 14 bytes */
 static const int ETHERNET_HEADER_LEN = 14;
+
+enum class IcmpResponse : int {
+	ECHO_REPLY = 0,
+	DESTINATION_UNREACHABLE = 3,
+	ECHO = 8,
+	TIME_EXCEEDED = 11,
+};
 
 /* Ethernet header */
 struct ethernetHeader {
@@ -67,7 +73,6 @@ struct tcpHeader {
 struct icmpHeader {
   u_char type;
   u_char code;
-  
   u_short checksum;
   u_short identifier;
   u_short seqNum;
@@ -76,6 +81,6 @@ struct icmpHeader {
 struct udpHeader {
 	u_short	srcPort;		/* source port */
 	u_short	dstPort;		/* destination port */
-	u_short	len;			/* udp length */
-	u_short	checksum;			/* udp checksum */
+	u_short	len;			  /* udp length */
+	u_short	checksum;		/* udp checksum */
 };

@@ -33,6 +33,11 @@ class RouteEntry {
   int getInterface() const {
     return interface_;
   }
+
+ /* Returns the nextHop */
+  std::uint32_t getNextHop() const {
+    return nextHop_;
+  }
   
 private:
   std::uint32_t nwAddress_;
