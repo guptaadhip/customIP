@@ -72,3 +72,10 @@ struct icmpHeader {
   u_short identifier;
   u_short seqNum;
 };
+
+struct udpHeader {
+	u_short	srcPort;		/* source port */
+	u_short	dstPort;		/* destination port */
+	u_short	len;			/* udp length */
+	u_short	checksum;			/* udp checksum */
+};
