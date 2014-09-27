@@ -11,29 +11,22 @@ using namespace std;
 
 void PacketProducer::ForwardPacket(const u_char *packet){
 	struct ipHeader *ipHead = (struct ipHeader *) (packet + ETHERNET_HEADER_LEN);
-	int forwardPacket = 1;
 	int destinationReachable = 1;
-	//Check if packet destined to another host
-	if(myIps.isDestinedToMe(ipHead)){
-		forwardPacket = 0;
-	}
 	
 	//Check if destination is reachable
 	if(routeTable.search(ipHead->ipDst) == nullptr){
 		destinationReachable = 0;
 	}
 	
-	if(forwardPacket == 1 && destinationReachable == 1){
-		if((ipHead->ipTtl -1) == 0){ // Packet outlived its time, send an ICMP message to source, call icmpHandler
+	if(destinationReachable == 1){
+		if((ipHead->ipTtl -1) == 0){ // TBD - Packet outlived its time, send an ICMP message to source, call icmpHandler
 		}
 		
 		ipHead->ipTtl = ipHead->ipTtl - 1; // decrease TTL
 		ipHead->ipChecksum = IPChecksum((unsigned short *)ipHead, sizeof(struct ipHeader));	//Update Checksum;
-	}else if(forwardPacket == 0){ // packet destined to Host
-	}else if(destinationReachable == 0){ // Destination Host unreachable, notify the Source
+	}else if(destinationReachable == 0){ // TBD - Destination Host unreachable, notify the Source , send ICMP message
 	}
 }
-
 
 void PacketProducer::ResponsePacket(const u_char *packet){
 	struct ipHeader *ipHead = (struct ipHeader *) (packet + ETHERNET_HEADER_LEN);
@@ -43,16 +36,16 @@ void PacketProducer::ResponsePacket(const u_char *packet){
 	ipHead->ipDst = ipHead->ipSrc;
 	ipHead->ipSrc = tempAddr;
 	
-		if((ipHead->ipTtl -1) == 0){ // Packet outlived its time, send an ICMP message to source, call icmpHandler
+		if((ipHead->ipTtl -1) == 0){ // TBD - Packet outlived its time, send an ICMP message to source, call icmpHandler
 		}
 		
 		ipHead->ipTtl = 255; // decrease TTL
 		ipHead->ipChecksum = IPChecksum((unsigned short *)ipHead, sizeof(struct ipHeader));	//Update Checksum;
 		
-		// Create ICMP Header
+		// TBD -  Create ICMP Header
 }
 
-unsigned short PacketProducer::IPChecksum(unsigned short *addr, int len){
+unsigned short PacketProducer::IPChecksum(unsigned short *addr, int len){ // TBD - Produce wrong checksum
 	int nleft = len;
   int sum = 0;
   unsigned short *w = addr;

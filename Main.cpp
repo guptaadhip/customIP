@@ -2,6 +2,7 @@
 #include "include/Sniffer.h"
 #include "include/net.h"
 #include "include/MyIp.h"
+#include "include/PacketProducer.h"
 
 #include <sys/socket.h>
 #include <iostream>
@@ -13,6 +14,7 @@ using namespace std;
 RouteTable routeTable;
 /* Self Ip address */
 MyIp myIps;
+PacketProducer packetEngine;
 
 /* This is the ICMP Handler if the dst address is of self*/
 void icmpHandler(struct icmpHeader *icmp) {
@@ -59,7 +61,9 @@ static void callbackHandler(u_char *args, const struct pcap_pkthdr* pkthdr,
            << " seqNum: "  << ntohs(icmp->seqNum)
            << " Ip Header len: " << ipHeaderLen
            << std::endl;*/
-    }
+    }else { // Packet should be forwarded
+			packetEngine.ForwardPacket(packet);
+		}
   }
 }
 
