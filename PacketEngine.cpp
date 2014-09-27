@@ -57,10 +57,8 @@ void PacketEngine::forwardPacket(const u_char *packet, uint32_t nextHopAddr) {
 
 void PacketEngine::responsePacket(const u_char *packet, IcmpResponse type) {
 	struct ipHeader *ip = (struct ipHeader *) (packet + ETHERNET_HEADER_LEN);
- 	struct in_addr tempAddr;
  	struct ipHeader *tempIp;
  	struct sockaddr_in dest;
- 	int socketFd;
  	u_short ipLen = ntohs(ip->ipLen);
 	u_char *tempPacket = (u_char *) malloc ((sizeof(u_char) * (ip->ipLen)));
 
@@ -105,6 +103,56 @@ void PacketEngine::responsePacket(const u_char *packet, IcmpResponse type) {
    */
   auto rc = sendto(socketFd_, tempPacket, ipLen, 0, (struct sockaddr *)&dest,
                    sizeof(struct sockaddr));
+  if (rc < 0) {
+  	cout << "Sending the ICMP Response failed!" << endl;
+    exit(1);
+  }
+}
+
+void PacketEngine::sendPing(const uint32_t srcAddr, const uint32_t dstAddr) {
+	u_char *pingPacket = (u_char *) malloc ((sizeof(u_char) * PING_PACKET_LEN));
+ 	struct ipHeader *tempIp;
+ 	struct sockaddr_in dest;
+	
+	/* Start IP Header Creation */
+	tempIp = (struct ipHeader *) malloc (IP_HEADER_LEN);
+  tempIp->ipVhl = IP_VHL(0x4, 0x5);
+  tempIp->ipTos = 0x0;
+  tempIp->ipLen = PING_PACKET_LEN;
+  tempIp->ipId = htons(random());
+  tempIp->ipOffset = 0x0;
+  tempIp->ipTtl = 64;
+  tempIp->ipProto = icmpProto;
+  tempIp->ipSrc.s_addr = srcAddr;
+  tempIp->ipDst.s_addr = dstAddr;
+  tempIp->ipChecksum = 0;
+  tempIp->ipChecksum = checksum ((uint16_t *) tempIp, IP_HEADER_LEN);
+	/* End IP Header Creation */
+
+  /* copy IP Header to Place */
+  int datalen = PING_PACKET_LEN - IP_HEADER_LEN - ICMP_HEADER_LEN;
+	memcpy(pingPacket, tempIp, IP_HEADER_LEN);
+
+	/* Lets do the ICMP */
+	struct icmpHeader *icmp;
+	icmp = (struct icmpHeader *) (pingPacket + IP_HEADER_LEN);
+	icmp->type = (uint8_t) IcmpResponse::ECHO;
+	icmp->code = 0;
+	icmp->checksum = 0;
+	icmp->checksum = checksum((uint16_t *) (pingPacket + IP_HEADER_LEN),
+                                          ICMP_HEADER_LEN + datalen);
+
+	/* Lets send the packet */
+	
+  memset(&dest, 0, sizeof(struct sockaddr_in));
+	dest.sin_family = AF_INET;
+  dest.sin_addr.s_addr = dstAddr;
+  
+  /*
+   *  now the packet is sent
+   */
+  auto rc = sendto(socketFd_, pingPacket, PING_PACKET_LEN, 0, 
+  								(struct sockaddr *)&dest, sizeof(struct sockaddr));
   if (rc < 0) {
   	cout << "Sending the ICMP Response failed!" << endl;
     exit(1);

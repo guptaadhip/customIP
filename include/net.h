@@ -11,6 +11,8 @@ static const int ETHERNET_HEADER_LEN = 14;
 static const int IP_HEADER_LEN = 20;
 static const int ICMP_HEADER_LEN = 8;
 
+static const int PING_PACKET_LEN = 64;
+
 
 enum class IcmpResponse : int {
 	ECHO_REPLY = 0,
