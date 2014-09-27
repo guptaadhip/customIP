@@ -37,8 +37,8 @@ struct ipHeader {
   struct in_addr ipSrc,ipDst;
 };
 
-#define IP_HL(ip)		(((ip)->ip_vhl) & 0x0f)
-#define IP_V(ip)		(((ip)->ip_vhl) >> 4)
+#define IP_HL(ip)		(((ip)->ipVhl) & 0x0f)
+#define IP_V(ip)		(((ip)->ipVhl) >> 4)
 
 /* TCP header */
 struct tcpHeader {
@@ -63,8 +63,7 @@ struct tcpHeader {
 	u_short urgPointer;
 };
 
-struct icmpHeader
-{
+struct icmpHeader {
   u_char type;
   u_char code;
   

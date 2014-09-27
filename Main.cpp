@@ -1,8 +1,9 @@
 #include "include/RouteTable.h"
 #include "include/Sniffer.h"
 #include "include/net.h"
-#include <sys/socket.h>
+#include "include/MyIp.h"
 
+#include <sys/socket.h>
 #include <iostream>
 
 using namespace std;
@@ -10,23 +11,51 @@ using namespace std;
 
 /* global Route table */
 RouteTable routeTable;
+/* Self Ip address */
+MyIp myIps;
+
+/* This is the ICMP Handler if the dst address is of self*/
+void icmpHandler(struct icmpHeader *icmp) {
+  int icmpType = (int) icmp->type;
+  switch (icmpType) {
+    case 8:
+      /* Set type to 8 and respond back */
+      icmp->type = 0;
+      break;
+  }
+}
 
 static void callbackHandler(u_char *args, const struct pcap_pkthdr* pkthdr,
                                                         const u_char* packet) {
   u_int caplen = pkthdr->caplen; 
   u_int length = pkthdr->len;
-  const struct ethernetHeader *ethernet;
-  const struct ipHeader *ip;
+  struct ethernetHeader *ethernet;
+  struct ipHeader *ip;
   u_short ethernetType;
+  uint32_t ipHeaderLen;
   ethernet = (struct ethernetHeader *) packet;
   ethernetType = ntohs(ethernet->ethType);
   if (ethernetType == ethTypeIp) {
     ip = (struct ipHeader *) (packet + ETHERNET_HEADER_LEN);
-    /* ICMP Packet Proto */
-    if (ip->ipProto == icmpProto) {
-      cout << "Source Host: " << inet_ntoa(ip->ipSrc)
+    ipHeaderLen = IP_HL(ip) * 4;
+    /* if the packets are destined to me */
+    if (myIps.isDestinedToMe(ip) == true) {
+      /* ICMP Packet Proto */
+      if (ip->ipProto == icmpProto) {
+        struct icmpHeader *icmp = (struct icmpHeader *) (packet + 
+                                          ETHERNET_HEADER_LEN + ipHeaderLen);
+        /* create the ICMP reply */
+        icmpHandler(icmp);
+        cout << "Made Request Need to send" << endl;
+      }
+      /*cout << "Source Host: " << inet_ntoa(ip->ipSrc)
            << " Destination Host: " << inet_ntoa(ip->ipDst)
-           << std::endl;
+           << " Type: "  << (int) icmp->type
+           << " Code: "  << (int) icmp->code
+           << " Identifier: "  << ntohs(icmp->identifier)
+           << " seqNum: "  << ntohs(icmp->seqNum)
+           << " Ip Header len: " << ipHeaderLen
+           << std::endl;*/
     }
   }
 }
