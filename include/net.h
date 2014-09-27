@@ -22,15 +22,15 @@ static const u_char icmpProto = 0x1;
 
 /* IP header */
 struct ipHeader {
-  static const uint32_t ipRf = 0x8000;		/* reserved fragment flag */
-  static const uint32_t ipDf = 0x4000;		/* dont fragment flag */
-  static const uint32_t ipMf = 0x2000;		/* more fragments flag */
-  static const uint32_t ipOffmask = 0x1fff;	/* mask for fragmenting bits */
   u_char ipVhl;
   u_char ipTos;
   u_short ipLen;
   u_short ipId;
   u_short ipOffset;
+  static const uint32_t ipRf = 0x8000;		/* reserved fragment flag */
+  static const uint32_t ipDf = 0x4000;		/* dont fragment flag */
+  static const uint32_t ipMf = 0x2000;		/* more fragments flag */
+  static const uint32_t ipOffmask = 0x1fff;	/* mask for fragmenting bits */
   u_char ipTtl;
   u_char ipProto;
   u_short ipChecksum;
@@ -39,6 +39,7 @@ struct ipHeader {
 
 #define IP_HL(ip)		(((ip)->ipVhl) & 0x0f)
 #define IP_V(ip)		(((ip)->ipVhl) >> 4)
+#define IP_VHL(v, hl) (v << 4 | (0x0f & hl))
 
 /* TCP header */
 struct tcpHeader {
