@@ -4,6 +4,7 @@
 #include "include/MyIp.h"
 #include "include/PacketEngine.h"
 #include "include/NetworkHandler.h"
+#include "include/CustomOspf.h"
 
 #include <sys/socket.h>
 #include <iostream>
@@ -55,9 +56,12 @@ static void callbackHandler(u_char *args, const struct pcap_pkthdr* pkthdr,
 }
 
 int main() {
-	NetworkHandler networkHandler(&myIps,&packetEngine);
+  CustomOspf ospf; 
+  ospf.start();
+	/*NetworkHandler networkHandler(&myIps,&packetEngine);
   routeTable.addMyRoutes(myIps.getMyIps());
-  Sniffer sniff;
-  sniff.registerCallback(callbackHandler);
+  Sniffer sniff();
+  sniff.registerCallback(callbackHandler);*/
+
   return 0;
 }
