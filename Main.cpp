@@ -56,7 +56,7 @@ static void callbackHandler(u_char *args, const struct pcap_pkthdr* pkthdr,
 }
 
 int main() {
-  CustomOspf ospf; 
+  CustomOspf ospf(&routeTable); 
   ospf.start();
 	/*NetworkHandler networkHandler(&myIps,&packetEngine);
   routeTable.addMyRoutes(myIps.getMyIps());
