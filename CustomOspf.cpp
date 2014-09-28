@@ -132,7 +132,9 @@ void CustomOspf::recvInfo() {
       bcopy((buffer + (idx * sizeof(uint32_t))), &networkAddr, sizeof(uint32_t));
       /* print to be removed */
       std::cout << "Network Address: " << networkAddr << std::endl;
-      RouteEntry route(networkAddr, clientAddr.sin_addr.s_addr, 0x00FFFFFF, "en0");
+      auto localRoute = routeTable_->search((clientAddr.sin_addr.s_addr & 0x00FFFFFF));
+      RouteEntry route(networkAddr, clientAddr.sin_addr.s_addr, 0x00FFFFFF, 
+                                                          localRoute->getInterface());
       routeTable_->insert(route);
     }
     routeTable_->printRouteTable();

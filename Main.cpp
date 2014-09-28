@@ -56,11 +56,13 @@ static void callbackHandler(u_char *args, const struct pcap_pkthdr* pkthdr,
 }
 
 int main() {
+  /* get local network */
+  NetworkHandler networkHandler(&myIps,&packetEngine);
+  routeTable.addMyRoutes(myIps.getMyIps());
+  /* get non-local networks */
   CustomOspf ospf(&routeTable); 
   ospf.start();
-	/*NetworkHandler networkHandler(&myIps,&packetEngine);
-  routeTable.addMyRoutes(myIps.getMyIps());
-  Sniffer sniff();
+  /*Sniffer sniff();
   sniff.registerCallback(callbackHandler);*/
 
   return 0;
