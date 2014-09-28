@@ -22,7 +22,9 @@ void CustomOspf::start() {
   /* sender runs after 5 seconds to make sure all others are up */
   sleep(5);
   /* Sender Thread */
-  std::thread sender (std::bind(&CustomOspf::sendInfo,this));
+  std::thread sender (std::bind(&CustomOspf::sendInfo,this, rtr1));
+  /* Sender 2 Thread */
+  std::thread sender2 (std::bind(&CustomOspf::sendInfo,this, rtr2));
   /* wait for the receiver to finish */
   receiver.join();
 }
@@ -43,7 +45,7 @@ void CustomOspf::getMyIpInfo() {
   }
 }
 
-void CustomOspf::sendInfo() {
+void CustomOspf::sendInfo(uint32_t addr) {
   int socketFd;
   struct sockaddr_in serverAddr;
   struct hostent *server;
@@ -61,7 +63,7 @@ void CustomOspf::sendInfo() {
 
   /* Set server address values */
   serverAddr.sin_family = AF_INET;
-  serverAddr.sin_addr.s_addr = inet_addr("192.168.1.8");
+  serverAddr.sin_addr.s_addr = addr;
   serverAddr.sin_port = htons(OSPF_PORT);
 
   serverAddrLength = sizeof(serverAddr);
