@@ -19,6 +19,8 @@ CustomOspf::CustomOspf() {
 void CustomOspf::start() {
   /* Receiver Thread */
   std::thread receiver (std::bind(&CustomOspf::recvInfo,this));
+  /* sender runs after 5 seconds to make sure all others are up */
+  sleep(5);
   /* Sender Thread */
   std::thread sender (std::bind(&CustomOspf::sendInfo,this));
   /* wait for the receiver to finish */
@@ -35,7 +37,6 @@ void CustomOspf::getMyIpInfo() {
       uint32_t ipAddr = ((struct sockaddr_in *)ifa->ifa_addr)->sin_addr.s_addr;
       //if (ipAddr != LOOPBACK_IP && ((ipAddr & 0x0000ffff) != CONTROL_NW_IP)) {
       if (ipAddr != LOOPBACK_IP) {
-        std::cout << ipAddr << std::endl;
         ipVector_.push_back(ipAddr);
       }
     }
@@ -74,7 +75,6 @@ void CustomOspf::sendInfo() {
   int i = sizeof(uint32_t);
   for(auto ipAddr : ipVector_) {
     uint32_t networkIP = ipAddr & 0x00ffffff;
-    std::cout << networkIP << std::endl;
     bcopy(&networkIP, (buffer + i), sizeof(uint32_t));
     i += sizeof(uint32_t);
   }
@@ -118,6 +118,14 @@ void CustomOspf::recvInfo() {
       std::cout << "Custom OSPF: Error Receiving Data" << std::endl;
       close(socketFd);
       exit(0);
+    }
+    uint32_t count;
+    bcopy(buffer, &count, sizeof(uint32_t));
+    for (int idx = 1; idx <= count; idx++) {
+      uint32_t networkAddr;
+      bcopy((buffer + (idx * sizeof(uint32_t))), &networkAddr, sizeof(uint32_t));
+      /* TBD: enter this in the routing table */
+      std::cout << "Network Address: " << networkAddr << std::endl;
     }
   }
 }
