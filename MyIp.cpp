@@ -1,9 +1,11 @@
 #include "include/MyIp.h"
 #include <sys/types.h>
-#include <ifaddrs.h>
 #include <netinet/in.h> 
 #include <string.h> 
 #include <arpa/inet.h>
+
+/* to be removed */
+#include <iostream>
 
 using namespace std;
 
@@ -14,16 +16,16 @@ MyIp::MyIp() {
 
 /* find my ips and set it in the list */
 void MyIp::init() {
-	struct ifaddrs * ifAddrStruct=NULL;
   struct ifaddrs * ifa=NULL;
+  getifaddrs(&ifAddrStruct_);
 
-  getifaddrs(&ifAddrStruct);
-
-  for (ifa = ifAddrStruct; ifa != NULL; ifa = ifa->ifa_next) {
-  	if (ifa ->ifa_addr->sa_family==AF_INET) { // check it is IP4
+  for (ifa = ifAddrStruct_; ifa != NULL; ifa = ifa->ifa_next) {
+  	if (ifa->ifa_addr->sa_family==AF_INET) { // check it is IP4
   		uint32_t ipAddr = ((struct sockaddr_in *)ifa->ifa_addr)->sin_addr.s_addr;
-  		std::string interface = string(ifa->ifa_name);
-  		myIp_.insert(std::make_pair(ipAddr, interface));
+  		if (ipAddr != LOOPBACK_IP) {
+  			std::string interface = string(ifa->ifa_name);
+  			myIp_.insert(std::make_pair(ipAddr, interface));
+  		}
     }
   }
 }
@@ -43,4 +45,23 @@ std::string MyIp::getInterface(struct ipHeader *ip) {
 		return match->second;
 	}
 	return nullptr;
+}
+
+/* Return my ip addresses */
+std::unordered_map<uint32_t, std::string> MyIp::getMyIps() const {
+	return myIp_;
+}
+
+/* to be remove just for debugging reasons */
+void MyIp::printIfAddr() {
+	struct ifaddrs * ifa=NULL;
+	for (ifa = ifAddrStruct_; ifa != NULL; ifa = ifa->ifa_next) {
+		if (ifa ->ifa_addr->sa_family==AF_INET) { // check it is IP4
+			struct sockaddr_in *sa = (struct sockaddr_in *) ifa->ifa_addr;
+			char *addr = inet_ntoa(sa->sin_addr);
+			cout << "ifa_name: " << ifa->ifa_name << "\t::\t ifa_flags: " 
+			<< ifa->ifa_flags << "\t::\t ifa_addr: " << addr << " " 
+			<< ntohl(sa->sin_addr.s_addr) << endl;
+		}
+	}
 }
