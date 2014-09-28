@@ -3,6 +3,7 @@
 #include "include/net.h"
 #include "include/MyIp.h"
 #include "include/PacketEngine.h"
+#include "include/NetworkHandler.h"
 
 #include <sys/socket.h>
 #include <iostream>
@@ -65,6 +66,7 @@ int main() {
   if (found) {
     cout << "Interface: " << found->getInterface() << std::endl;
   }*/
+	NetworkHandler networkHandler(&myIps,&packetEngine);
   Sniffer sniff;
   sniff.registerCallback(callbackHandler);
   return 0;

@@ -15,7 +15,7 @@ static const int PING_PACKET_LEN = 64;
 static const uint32_t INCREMENT_IP = 0x01000000;
 
 /* IPs not to be added */
-static const uint32_t LOOPBACK_IP = 0x0100000f; /* loopback */
+static const uint32_t LOOPBACK_IP = 0x0100007f; /* loopback */
 static const uint32_t CONTROL_NW_IP = 0x0000A8C0; /* Deter control Nw IP */
 
 enum class IcmpResponse : int {
