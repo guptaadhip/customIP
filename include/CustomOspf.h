@@ -1,5 +1,6 @@
 #pragma once
 #include <vector>
+#include <cstdint>
 
 #define OSPF_PORT 5000   //The port on which to listen for incoming data
 #define BUFLEN 100  //Max length of buffer

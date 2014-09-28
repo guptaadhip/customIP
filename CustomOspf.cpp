@@ -7,6 +7,7 @@
 #include <thread>
 #include <ifaddrs.h>
 #include <functional>
+#include <cstring>
 
 /* to be removed */
 #include <iostream>
