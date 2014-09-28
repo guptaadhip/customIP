@@ -20,6 +20,7 @@ void Sniffer::init() {
   struct bpf_program filter;        /* hold compiled program */
   bpf_u_int32 mask;            /* subnet mask */
   bpf_u_int32 networkAddress;             /* ip */
+  char *filterString = "not port 5000";
   
   /* get the default device */
   device = "en1";
@@ -36,7 +37,7 @@ void Sniffer::init() {
   }
   
   /* get only IP packets */
-  if (pcap_compile(descr_, &filter, NULL, 0, networkAddress) == -1) {
+  if (pcap_compile(descr_, &filter, filterString, 0, networkAddress) == -1) {
     cout << "Error compiling the filter" << endl;
     exit(1);
   }

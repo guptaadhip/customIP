@@ -1,11 +1,13 @@
 #pragma once
 #include <cstdint>
+#include <string>
 
 /* Ip Table Entry Object */
 class RouteEntry {
  public:
-  RouteEntry(std::uint32_t nwAddress,std::uint32_t nextHop,
-                                        std::uint32_t subnetMask,int interface)
+  RouteEntry(std::uint32_t nwAddress, std::uint32_t nextHop,
+                                        std::uint32_t subnetMask,
+                                          std::string interface)
     : nwAddress_(nwAddress),
       subnetMask_(subnetMask),
       interface_(interface),
@@ -15,7 +17,7 @@ class RouteEntry {
   RouteEntry() {
     nwAddress_ = 0;
     subnetMask_ = 0;
-    interface_ = 0;
+    interface_ = nullptr;
     nextHop_ = 0;
   }
   
@@ -30,7 +32,7 @@ class RouteEntry {
   }
   
   /* Returns the Interface */
-  int getInterface() const {
+  std::string getInterface() const {
     return interface_;
   }
 
@@ -43,5 +45,5 @@ private:
   std::uint32_t nwAddress_;
   std::uint32_t nextHop_;
   std::uint32_t subnetMask_;
-  int interface_;
+  std::string interface_;
 };

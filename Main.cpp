@@ -45,11 +45,9 @@ static void callbackHandler(u_char *args, const struct pcap_pkthdr* pkthdr,
       return;
       auto entry = routeTable.search(ip->ipDst.s_addr);
       if (entry == nullptr) {
-        cout << "I Got called 2" << endl;
         packetEngine.responsePacket(packet, IcmpResponse::DESTINATION_UNREACHABLE);
         return;
       } else {
-        cout << "I Got called 3" << endl;
         packetEngine.forwardPacket(packet, entry->getNextHop());
       }
 		}
@@ -57,16 +55,8 @@ static void callbackHandler(u_char *args, const struct pcap_pkthdr* pkthdr,
 }
 
 int main() {
-  /* Testing the routing table */
-  //RouteTable routeTable;
-  /* 192.168.0.2/32 nexthop: 192.168.0.1, interface 1 */
-  /*RouteEntry entry(3232235778,3232235777, 4294967295, 10);
-  routeTable.insert(entry);
-  auto found = routeTable.search(3232235778);
-  if (found) {
-    cout << "Interface: " << found->getInterface() << std::endl;
-  }*/
 	NetworkHandler networkHandler(&myIps,&packetEngine);
+  routeTable.addMyRoutes(myIps.getMyIps());
   Sniffer sniff;
   sniff.registerCallback(callbackHandler);
   return 0;
