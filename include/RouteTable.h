@@ -27,4 +27,7 @@ class RouteTable {
   
  private:
   std::unordered_map<uint32_t, RouteEntry> routeTable_;
+  int kernelSocketFd_;
+  /* Function to update kernel routing table */
+  void updateKernelRouteTable(RouteEntry);
 };
