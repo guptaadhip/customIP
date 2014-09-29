@@ -86,7 +86,7 @@ void RouteTable::updateKernelRouteTable(RouteEntry entry) {
   kRouteEntry.rt_dev = (char *) entry.getInterface().c_str();
   
   /* settin flags for Routing table */
-  if (entry.getNextHop() = 0x0) {
+  if (entry.getNextHop() == 0x0) {
     kRouteEntry.rt_flags = RTF_UP;
   } else {
     kRouteEntry.rt_flags = RTF_UP | RTF_GATEWAY;
