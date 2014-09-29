@@ -14,16 +14,15 @@ Sniffer::Sniffer() {
 }
 
 void Sniffer::init() {
-  char *device;
+  char device[] = "eth0";
   char errbuf[PCAP_ERRBUF_SIZE];
   const u_char *packet;
   struct bpf_program filter;        /* hold compiled program */
   bpf_u_int32 mask;            /* subnet mask */
   bpf_u_int32 networkAddress;             /* ip */
-  char *filterString = "not port 5000";
+  char filterString[] = "not port 5000";
   
   /* get the default device */
-  device = "en1";
   if (device == NULL) {
     cout << errbuf << endl;
     exit(1);
