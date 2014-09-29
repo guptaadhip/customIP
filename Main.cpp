@@ -43,7 +43,6 @@ static void callbackHandler(u_char *args, const struct pcap_pkthdr* pkthdr,
       }
       
     } else { // Packet should be forwarded
-      return;
       auto entry = routeTable.search(ip->ipDst.s_addr);
       if (entry == nullptr) {
         packetEngine.responsePacket(packet,
