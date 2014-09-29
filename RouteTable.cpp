@@ -59,8 +59,17 @@ void RouteTable::remove(uint32_t address) {
 void RouteTable::printRouteTable() {
 	for (auto entry : routeTable_) {
 		auto temp = entry.second;
-		cout << temp.getNwAddress() << " " << temp.getNextHop() 
-				 << " " << temp.getSubnetMask() << " " << temp.getInterface()
+		struct sockaddr_in *sa = (struct sockaddr_in *) temp.getNwAddress();
+		char *addr = inet_ntoa(sa->sin_addr);
+		
+		struct sockaddr_in *sa = (struct sockaddr_in *) temp.getNextHop();
+		char *hop = inet_ntoa(sa->sin_addr);
+		
+		struct sockaddr_in *sa = (struct sockaddr_in *) temp.getSubnetMask();
+		char *subnet = inet_ntoa(sa->sin_addr);
+		
+		cout << temp.getNwAddress() << " " << addr << " " << temp.getNextHop() 
+				 << " " << hop << " " << temp.getSubnetMask() << " " << subnet << " " << temp.getInterface()
 				 << endl;
 	}
 }

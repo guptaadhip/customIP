@@ -62,8 +62,8 @@ int main() {
   /* get non-local networks */
   CustomOspf ospf(&routeTable); 
   ospf.start();
-  /*Sniffer sniff();
-  sniff.registerCallback(callbackHandler);*/
+  Sniffer sniff;
+  sniff.registerCallback(callbackHandler);
 
   return 0;
 }
