@@ -35,8 +35,8 @@ static void callbackHandler(u_char *args, const struct pcap_pkthdr* pkthdr,
     if (myIps.isDestinedToMe(ip) == true) {
       /* ICMP Packet Proto */
       if (ip->ipProto == icmpProto) {
-        struct icmpHeader *icmp = (struct icmpHeader *) (packet + 
-                                          ETHERNET_HEADER_LEN + ipHeaderLen);
+        struct icmpHeader *icmp = (struct icmpHeader *) (packet +
+                                            ETHERNET_HEADER_LEN + ipHeaderLen);
         /* create the ICMP reply */
         packetEngine.responsePacket(packet, IcmpResponse::ECHO_REPLY);
         return;
@@ -46,7 +46,8 @@ static void callbackHandler(u_char *args, const struct pcap_pkthdr* pkthdr,
       return;
       auto entry = routeTable.search(ip->ipDst.s_addr);
       if (entry == nullptr) {
-        packetEngine.responsePacket(packet, IcmpResponse::DESTINATION_UNREACHABLE);
+        packetEngine.responsePacket(packet,
+                                    IcmpResponse::DESTINATION_UNREACHABLE);
         return;
       } else {
         packetEngine.forwardPacket(packet, entry->getNextHop());
@@ -56,14 +57,13 @@ static void callbackHandler(u_char *args, const struct pcap_pkthdr* pkthdr,
 }
 
 int main() {
+  routeTable.addMyRoutes(myIps.getMyIps());
   /* get local network */
   NetworkHandler networkHandler(&myIps,&packetEngine);
-  routeTable.addMyRoutes(myIps.getMyIps());
   /* get non-local networks */
   CustomOspf ospf(&routeTable); 
   ospf.start();
   Sniffer sniff;
   sniff.registerCallback(callbackHandler);
-
   return 0;
 }

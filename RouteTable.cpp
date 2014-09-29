@@ -33,7 +33,6 @@ void RouteTable::insert(RouteEntry entry) {
 RouteEntry * RouteTable::search(uint32_t address) {
   std::unordered_map<uint32_t,RouteEntry>::iterator match =
                                                       routeTable_.find(address);
-  
   if (match == routeTable_.end()) {
     return nullptr;
   } else {
@@ -45,8 +44,8 @@ RouteEntry * RouteTable::search(uint32_t address) {
 void RouteTable::addMyRoutes(std::unordered_map<uint32_t, std::string> ipList) {
 	for (auto entry : ipList) {
 		/* to get the network address from the IP we use the subnet mask */
-		RouteEntry route((entry.first & 0x00FFFFFF), 0x00000000, 0x00FFFFFF, 
-																																		entry.second);
+		RouteEntry route((entry.first & 0x00FFFFFF), 0x00000000, 0x00FFFFFF,
+                                                                  entry.second);
 		insert(route);
 	}
 }
@@ -73,24 +72,25 @@ void RouteTable::updateKernelRouteTable(RouteEntry entry) {
 	
   /* setting the next hop */
   ((struct sockaddr_in *) &kRouteEntry.rt_gateway)->sin_family = AF_INET;
-	((struct sockaddr_in *) &kRouteEntry.rt_gateway)->sin_addr.s_addr
-																								= entry.getNextHop();
+	((struct sockaddr_in *) &kRouteEntry.rt_gateway)->sin_addr.s_addr = entry.getNextHop();
   
   /* setting the network address */
   ((struct sockaddr_in *) &kRouteEntry.rt_dst)->sin_family = AF_INET;
-	((struct sockaddr_in *) &kRouteEntry.rt_dst)->sin_addr.s_addr
-																								= entry.getNwAddress();
+	((struct sockaddr_in *) &kRouteEntry.rt_dst)->sin_addr.s_addr = entry.getNwAddress();
   
   /* setting the subnet mask */
   ((struct sockaddr_in *) &kRouteEntry.rt_genmask)->sin_family = AF_INET;
-	((struct sockaddr_in *) &kRouteEntry.rt_genmask)->sin_addr.s_addr
-																								= entry.getSubnetMask();
+	((struct sockaddr_in *) &kRouteEntry.rt_genmask)->sin_addr.s_addr = entry.getSubnetMask();
 
   /* setting the interface */
   kRouteEntry.rt_dev = (char *) entry.getInterface().c_str();
   
   /* settin flags for Routing table */
-  kRouteEntry.rt_flags = RTF_UP | RTF_GATEWAY;
+  if (entry.getNextHop() = 0x0) {
+    kRouteEntry.rt_flags = RTF_UP;
+  } else {
+    kRouteEntry.rt_flags = RTF_UP | RTF_GATEWAY;
+  }
 
   /* adding the entry to the routing table */
 	if (ioctl(kernelSocketFd_	, SIOCADDRT, &kRouteEntry) < 0) {

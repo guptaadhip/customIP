@@ -22,8 +22,8 @@ void MyIp::init() {
   for (ifa = ifAddrStruct_; ifa != NULL; ifa = ifa->ifa_next) {
   	if (ifa->ifa_addr->sa_family==AF_INET) { // check it is IP4
   		uint32_t ipAddr = ((struct sockaddr_in *)ifa->ifa_addr)->sin_addr.s_addr;
-  		//if (ipAddr != LOOPBACK_IP && ((ipAddr & 0x0000ffff) != CONTROL_NW_IP)) {
-  		if (ipAddr != LOOPBACK_IP) { // This is for the local systems only
+  		if (ipAddr != LOOPBACK_IP && ((ipAddr & 0x0000ffff) != CONTROL_NW_IP)) {
+  		//if (ipAddr != LOOPBACK_IP) { // This is for the local systems only
   			std::string interface = string(ifa->ifa_name);
   			myIp_.insert(std::make_pair(ipAddr, interface));
   		}
@@ -32,7 +32,8 @@ void MyIp::init() {
 }
 
 bool MyIp::isDestinedToMe(struct ipHeader *ip) {
-	std::unordered_map<uint32_t, std::string>::iterator match = myIp_.find(ip->ipDst.s_addr);
+	std::unordered_map<uint32_t, std::string>::iterator match =
+                                                  myIp_.find(ip->ipDst.s_addr);
 	if (match != myIp_.end()) {
 		return true;
 	}
@@ -41,7 +42,8 @@ bool MyIp::isDestinedToMe(struct ipHeader *ip) {
 
 /* Returns -1 when address not found */
 std::string MyIp::getInterface(struct ipHeader *ip) {
-	std::unordered_map<uint32_t, std::string>::iterator match = myIp_.find(ip->ipSrc.s_addr);
+	std::unordered_map<uint32_t, std::string>::iterator match =
+                                                  myIp_.find(ip->ipSrc.s_addr);
 	if (match != myIp_.end()) {
 		return match->second;
 	}
