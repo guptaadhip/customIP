@@ -1,6 +1,7 @@
 #pragma once
 #include <vector>
 #include <cstdint>
+#include <thread>
 
 class RouteTable;
 
@@ -21,4 +22,7 @@ class CustomOspf {
   void getMyIpInfo();
   std::vector<uint32_t> ipVector_;
   RouteTable *routeTable_;
+  std::thread receiver_;
+  std::thread sender_;
+  std::thread sender2_;
 };

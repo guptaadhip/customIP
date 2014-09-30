@@ -6,15 +6,17 @@
 #include <netinet/in.h>
 #include <arpa/inet.h>
 #include <netinet/if_ether.h>
+#include <cstring>
 
 using namespace std;
 
-Sniffer::Sniffer() {
+Sniffer::Sniffer(string device) 
+  : device_(device) {
   init();
 }
 
 void Sniffer::init() {
-  char device[] = "eth0";
+  char *device = (char *) device_.c_str();
   char errbuf[PCAP_ERRBUF_SIZE];
   const u_char *packet;
   struct bpf_program filter;        /* hold compiled program */

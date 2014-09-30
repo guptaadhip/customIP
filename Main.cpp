@@ -8,9 +8,10 @@
 
 #include <sys/socket.h>
 #include <iostream>
+#include <functional>
+#include <thread>
 
 using namespace std;
-
 
 /* global Route table */
 RouteTable routeTable;
@@ -18,8 +19,9 @@ RouteTable routeTable;
 MyIp myIps;
 PacketEngine packetEngine;
 
-static void callbackHandler(u_char *args, const struct pcap_pkthdr* pkthdr,
+void callbackHandler(u_char *args, const struct pcap_pkthdr* pkthdr,
                                                         const u_char* packet) {
+
   u_int caplen = pkthdr->caplen; 
   u_int length = pkthdr->len;
   struct ethernetHeader *ethernet;
@@ -43,16 +45,16 @@ static void callbackHandler(u_char *args, const struct pcap_pkthdr* pkthdr,
       }
       
     } else { // Packet should be forwarded
-      return;
+      cout << "Got here" << endl;
       auto entry = routeTable.search(ip->ipDst.s_addr);
       if (entry == nullptr) {
         packetEngine.responsePacket(packet,
                                     IcmpResponse::DESTINATION_UNREACHABLE);
         return;
-      } else {
-        packetEngine.forwardPacket(packet, entry->getNextHop());
+      /*} else {
+        packetEngine.forwardPacket(packet, entry->getNextHop());*/
       }
-		}
+    }
   }
 }
 
@@ -63,7 +65,7 @@ int main() {
   /* get non-local networks */
   CustomOspf ospf(&routeTable); 
   ospf.start();
-  Sniffer sniff;
+  Sniffer sniff("eth1");
   sniff.registerCallback(callbackHandler);
   return 0;
 }

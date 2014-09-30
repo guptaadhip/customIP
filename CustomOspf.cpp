@@ -1,15 +1,14 @@
 #include "include/CustomOspf.h"
 #include "include/RouteTable.h"
+#include "include/RouteEntry.h"
 #include "include/net.h"
 #include <netinet/in.h> 
 #include <arpa/inet.h>
 #include <sys/socket.h>
 #include <unistd.h>
-#include <thread>
 #include <ifaddrs.h>
 #include <functional>
 #include <cstring>
-#include "include/RouteEntry.h"
 
 /* to be removed */
 #include <iostream>
@@ -22,15 +21,11 @@ CustomOspf::CustomOspf(RouteTable *routeTable) {
 /* lets do the OSPF */
 void CustomOspf::start() {
   /* Receiver Thread */
-  std::thread receiver (std::bind(&CustomOspf::recvInfo,this));
-  /* sender runs after 5 seconds to make sure all others are up */
-  sleep(5);
+  receiver_ = std::thread(std::bind(&CustomOspf::recvInfo,this));
   /* Sender Thread */
-  std::thread sender (std::bind(&CustomOspf::sendInfo,this, rtr1));
+  sender_ = std::thread(std::bind(&CustomOspf::sendInfo,this, rtr1));
   /* Sender 2 Thread */
-  std::thread sender2 (std::bind(&CustomOspf::sendInfo,this, rtr2));
-  /* wait for the receiver to finish */
-  receiver.join();
+  sender2_ = std::thread(std::bind(&CustomOspf::sendInfo,this, rtr2));
 }
 
 void CustomOspf::getMyIpInfo() {
@@ -95,6 +90,8 @@ void CustomOspf::sendInfo(uint32_t addr) {
 }
 
 void CustomOspf::recvInfo() {
+  /* This sleep is needed */
+  sleep(5);
   struct sockaddr_in clientAddr, serverAddr;
   char buffer[BUFLEN];
   socklen_t clientAddrLength;
