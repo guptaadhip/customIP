@@ -66,34 +66,28 @@ void RouteTable::printRouteTable() {
 
 /* Update the kernel routing table */
 void RouteTable::updateKernelRouteTable(RouteEntry entry) {
-	struct rtentry kRouteEntry;
+	/*struct rtentry kRouteEntry;
 	
 	bzero(&kRouteEntry, sizeof(kRouteEntry));
 	
-  /* setting the next hop */
   ((struct sockaddr_in *) &kRouteEntry.rt_gateway)->sin_family = AF_INET;
 	((struct sockaddr_in *) &kRouteEntry.rt_gateway)->sin_addr.s_addr = entry.getNextHop();
   
-  /* setting the network address */
   ((struct sockaddr_in *) &kRouteEntry.rt_dst)->sin_family = AF_INET;
 	((struct sockaddr_in *) &kRouteEntry.rt_dst)->sin_addr.s_addr = entry.getNwAddress();
   
-  /* setting the subnet mask */
   ((struct sockaddr_in *) &kRouteEntry.rt_genmask)->sin_family = AF_INET;
 	((struct sockaddr_in *) &kRouteEntry.rt_genmask)->sin_addr.s_addr = entry.getSubnetMask();
 
-  /* setting the interface */
   kRouteEntry.rt_dev = (char *) entry.getInterface().c_str();
   
-  /* settin flags for Routing table */
   if (entry.getNextHop() == 0x0) {
     kRouteEntry.rt_flags = RTF_UP;
   } else {
     kRouteEntry.rt_flags = RTF_UP | RTF_GATEWAY;
   }
 
-  /* adding the entry to the routing table */
 	if (ioctl(kernelSocketFd_	, SIOCADDRT, &kRouteEntry) < 0) {
 		cout << "Route Table: Error in setting the kernel table" << endl;
-	}
+	}*/
 }

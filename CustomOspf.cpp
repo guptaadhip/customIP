@@ -1,5 +1,5 @@
+#include "include/CustomIp.h"
 #include "include/CustomOspf.h"
-#include "include/RouteTable.h"
 #include "include/RouteEntry.h"
 #include "include/net.h"
 #include <netinet/in.h> 
@@ -13,8 +13,7 @@
 /* to be removed */
 #include <iostream>
 
-CustomOspf::CustomOspf(RouteTable *routeTable) {
-  routeTable_ = routeTable;
+CustomOspf::CustomOspf() {
   getMyIpInfo();
 }
 
@@ -128,12 +127,12 @@ void CustomOspf::recvInfo() {
       bcopy((buffer + (idx * sizeof(uint32_t))), &networkAddr, sizeof(uint32_t));
       /* print to be removed */
       std::cout << "Network Address: " << networkAddr << std::endl;
-      auto localRoute = routeTable_->search((clientAddr.sin_addr.s_addr & 0x00FFFFFF));
+      auto localRoute = routeTable.search((clientAddr.sin_addr.s_addr & 0x00FFFFFF));
       RouteEntry route(networkAddr, clientAddr.sin_addr.s_addr, 0x00FFFFFF, 
                                                           localRoute->getInterface());
-      routeTable_->insert(route);
+      routeTable.insert(route);
     }
-    routeTable_->printRouteTable();
+    routeTable.printRouteTable();
   }
 }
 

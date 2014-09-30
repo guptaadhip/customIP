@@ -1,8 +1,6 @@
-#include "include/RouteTable.h"
+#include "include/CustomIp.h"
 #include "include/Sniffer.h"
 #include "include/net.h"
-#include "include/MyIp.h"
-#include "include/PacketEngine.h"
 #include "include/NetworkHandler.h"
 #include "include/CustomOspf.h"
 
@@ -13,11 +11,7 @@
 
 using namespace std;
 
-/* global Route table */
-RouteTable routeTable;
-/* Self Ip address */
-MyIp myIps;
-PacketEngine packetEngine;
+
 
 void callbackHandler(u_char *args, const struct pcap_pkthdr* pkthdr,
                                                         const u_char* packet) {
@@ -45,7 +39,6 @@ void callbackHandler(u_char *args, const struct pcap_pkthdr* pkthdr,
       }
       
     } else { // Packet should be forwarded
-      cout << "Got here" << endl;
       auto entry = routeTable.search(ip->ipDst.s_addr);
       if (entry == nullptr) {
         packetEngine.responsePacket(packet,
@@ -61,11 +54,11 @@ void callbackHandler(u_char *args, const struct pcap_pkthdr* pkthdr,
 int main() {
   routeTable.addMyRoutes(myIps.getMyIps());
   /* get local network */
-  NetworkHandler networkHandler(&myIps,&packetEngine);
+  NetworkHandler networkHandler;
   /* get non-local networks */
-  CustomOspf ospf(&routeTable); 
+  CustomOspf ospf; 
   ospf.start();
-  Sniffer sniff("eth1");
+  Sniffer sniff("en1");
   sniff.registerCallback(callbackHandler);
   return 0;
 }

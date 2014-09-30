@@ -23,7 +23,6 @@ void MyIp::init() {
   	if (ifa->ifa_addr->sa_family==AF_INET) { // check it is IP4
   		uint32_t ipAddr = ((struct sockaddr_in *)ifa->ifa_addr)->sin_addr.s_addr;
   		if (ipAddr != LOOPBACK_IP && ((ipAddr & 0x0000ffff) != CONTROL_NW_IP)) {
-  		//if (ipAddr != LOOPBACK_IP) { // This is for the local systems only
   			std::string interface = string(ifa->ifa_name);
   			myIp_.insert(std::make_pair(ipAddr, interface));
   		}
