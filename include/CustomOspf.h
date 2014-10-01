@@ -11,6 +11,14 @@ class RouteTable;
 static const uint32_t rtr1 = 0x0401A8C0; /* Anuj: 192.168.1.8 */
 static const uint32_t rtr2 = 0x1401A8C0; /* Adhips VM: 192.168.1.20 */
 
+enum class OspfMsgType : uint32_t {
+  HELLO = 2,
+  ADD = 4,
+  DELETE = 8,
+  CASCADED_ADD = 16,
+  CASCADED_DELETE = 20,
+}
+
 class CustomOspf {
  public:
   CustomOspf(RouteTable *routeTable);
