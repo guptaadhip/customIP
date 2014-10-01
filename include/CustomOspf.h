@@ -25,6 +25,7 @@ class CustomOspf {
   void start();
   void recvInfo();
   void sendInfo(uint32_t addr);
+  void sendUpdate(char *buffer, uint32_t addr);
 
  private:
   void getMyIpInfo();
@@ -33,4 +34,5 @@ class CustomOspf {
   std::thread receiver_;
   std::thread sender_;
   std::thread sender2_;
+  int sendSocket_;
 };

@@ -16,6 +16,13 @@
 CustomOspf::CustomOspf(RouteTable *routeTable) {
   routeTable_ = routeTable;
   getMyIpInfo();
+
+  /* Creating the Internet domain socket */
+  sendSocket_ = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+  if (sendSocket_ < 0) {
+    std::cout << "Custom OSPF: Error sendSocket creation failed" << std::endl;
+    exit(1);
+  }
 }
 
 /* lets do the OSPF */
@@ -89,8 +96,28 @@ void CustomOspf::sendInfo(uint32_t addr) {
                       (struct sockaddr *) &serverAddr, serverAddrLength);
   if (rc < 0) {  
     std::cout << "Custom OSPF: Error Sending Data" << std::endl;
-  }
+  } 
+}
+
+void CustomOspf::sendUpdate(char *buffer, uint32_t addr) {
+  struct sockaddr_in serverAddr;
+  struct hostent *server;
+  socklen_t serverAddrLength;
   
+  /* zeroing the address structures Good Practice*/
+  bzero((char *) &serverAddr, sizeof(serverAddr));
+  
+  /* Set server address values */
+  serverAddr.sin_family = AF_INET;
+  serverAddr.sin_addr.s_addr = addr;
+  serverAddr.sin_port = htons(OSPF_PORT);
+  serverAddrLength = sizeof(serverAddr);
+
+  auto rc = sendto(sendSocket_, buffer, sizeof(buffer), 0,
+                      (struct sockaddr *) &serverAddr, serverAddrLength);
+  if (rc < 0) {  
+    std::cout << "Custom OSPF: Error Sending Update Data" << std::endl;
+  } 
 }
 
 void CustomOspf::recvInfo() {
@@ -144,14 +171,28 @@ void CustomOspf::recvInfo() {
                                                           localRoute->getInterface());
         routeTable_->insert(route);
         if (ospfType == OspfMsgType::ADD) {
-          /* call the function to send the details further */
+          uint32_t temp = (uint32_t) OspfMsgType::CASCADED_ADD;
+          /* update the type */
+          bcopy(&temp, buffer, sizeof(uint32_t));
+          /* send on the interface from where the update was not received */
+          if (clientAddr.sin_addr.s_addr == rtr1) {
+            sendUpdate(buffer, rtr2);
+          } else {
+            sendUpdate(buffer, rtr1);
+          }
         }
       } else {
         /* Delete */
-        if (ospfType == OspfMsgType::DELETE || ospfType == OspfMsgType::CASCADED_DELETE) {
-          routeTable_->remove(networkAddr);
-          if (ospfType == OspfMsgType::DELETE) {
-            /* call the function to delete the details further */
+        routeTable_->remove(networkAddr);
+        if (ospfType == OspfMsgType::DELETE) {
+          uint32_t temp = (uint32_t) OspfMsgType::CASCADED_DELETE;
+          /* update the type */
+          bcopy(&temp, buffer, sizeof(uint32_t));
+          /* send on the interface from where the update was not received */
+          if (clientAddr.sin_addr.s_addr == rtr1) {
+            sendUpdate(buffer, rtr2);
+          } else {
+            sendUpdate(buffer, rtr1);
           }
         }
       }
