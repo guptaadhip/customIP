@@ -58,14 +58,30 @@ void callbackHandler(u_char *args, const struct pcap_pkthdr* pkthdr,
   }
 }
 
+/* Thread Spawned to sniff on all interfaces */
+void startSniffing(std::string device){
+	Sniffer sniff(device);
+  sniff.registerCallback(callbackHandler);
+}
+
 int main() {
+	std::vector<std::thread> threads;
+	
   routeTable.addMyRoutes(myIps.getMyIps());
   /* get local network */
   NetworkHandler networkHandler(&myIps,&packetEngine);
   /* get non-local networks */
   CustomOspf ospf(&routeTable); 
   ospf.start();
-  Sniffer sniff("eth1");
-  sniff.registerCallback(callbackHandler);
+  
+	//Sniffer sniff("eth1");
+  //sniff.registerCallback(callbackHandler);
+	
+	for(auto entry : myIps.getMyIps()){
+		threads.push_back(std::thread(startSniffing,entry.second));
+	}
+	
+	for (auto& joinThreads : threads) joinThreads.join();
+	
   return 0;
 }
