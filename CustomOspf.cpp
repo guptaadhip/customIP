@@ -44,6 +44,8 @@ void CustomOspf::getMyIpInfo() {
 }
 
 void CustomOspf::sendInfo(uint32_t addr) {
+  /* This sleep is needed */
+  sleep(5);
   int socketFd;
   struct sockaddr_in serverAddr;
   struct hostent *server;
@@ -89,8 +91,6 @@ void CustomOspf::sendInfo(uint32_t addr) {
 }
 
 void CustomOspf::recvInfo() {
-  /* This sleep is needed */
-  sleep(5);
   struct sockaddr_in clientAddr, serverAddr;
   char buffer[BUFLEN];
   socklen_t clientAddrLength;

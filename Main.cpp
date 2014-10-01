@@ -45,7 +45,6 @@ void callbackHandler(u_char *args, const struct pcap_pkthdr* pkthdr,
       }
       
     } else { // Packet should be forwarded
-      cout << "Got here" << endl;
       auto entry = routeTable.search(ip->ipDst.s_addr);
       if (entry == nullptr) {
         packetEngine.responsePacket(packet,
@@ -60,12 +59,12 @@ void callbackHandler(u_char *args, const struct pcap_pkthdr* pkthdr,
 
 /* Thread Spawned to sniff on all interfaces */
 void startSniffing(std::string device){
-	Sniffer sniff(device);
+  Sniffer sniff(device);
   sniff.registerCallback(callbackHandler);
 }
 
 int main() {
-	std::vector<std::thread> threads;
+  std::vector<std::thread> threads;
 	
   routeTable.addMyRoutes(myIps.getMyIps());
   /* get local network */
@@ -74,14 +73,12 @@ int main() {
   CustomOspf ospf(&routeTable); 
   ospf.start();
   
-	//Sniffer sniff("eth1");
+  //Sniffer sniff("eth1");
   //sniff.registerCallback(callbackHandler);
 	
-	for(auto entry : myIps.getMyIps()){
-		threads.push_back(std::thread(startSniffing,entry.second));
-	}
-	
-	for (auto& joinThreads : threads) joinThreads.join();
-	
+  for(auto entry : myIps.getMyIps()){
+    threads.push_back(std::thread(startSniffing,entry.second));
+  }
+  for (auto& joinThreads : threads) joinThreads.join();
   return 0;
 }
