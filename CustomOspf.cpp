@@ -22,9 +22,9 @@ CustomOspf::CustomOspf(RouteTable *routeTable) {
 void CustomOspf::start() {
   /* Receiver Thread */
   receiver_ = std::thread(std::bind(&CustomOspf::recvInfo,this));
-  /* Sender Thread */
+  /* Initial Sender Thread */
   sender_ = std::thread(std::bind(&CustomOspf::sendInfo,this, rtr1));
-  /* Sender 2 Thread */
+  /* Initial Sender 2 Thread */
   sender2_ = std::thread(std::bind(&CustomOspf::sendInfo,this, rtr2));
 }
 
@@ -72,9 +72,12 @@ void CustomOspf::sendInfo(uint32_t addr) {
   bzero((char *) buffer, sizeof(buffer));
 
   /* fill the buffer with the values */
-  uint32_t count = ipVector_.size();
-  bcopy(&count, buffer, sizeof(uint32_t));
+  uint32_t ospfType = (uint32_t) OspfMsgType::ADD; 
+  bcopy(&ospfType, buffer, sizeof(uint32_t));
   int i = sizeof(uint32_t);
+  uint32_t count = ipVector_.size();
+  bcopy(&count, (buffer + i), sizeof(uint32_t));
+  i = sizeof(uint32_t);
   for(auto ipAddr : ipVector_) {
     uint32_t networkIP = ipAddr & 0x00ffffff;
     bcopy(&networkIP, (buffer + i), sizeof(uint32_t));
@@ -121,17 +124,37 @@ void CustomOspf::recvInfo() {
       close(socketFd);
       exit(0);
     }
+    OspfMsgType ospfType;
+    bcopy(buffer, &ospfType, sizeof(uint32_t));
+    /* do the stuff for hello */
+    if (ospfType == OspfMsgType::HELLO) {
+      /* no need to go further */
+      continue;
+    }
+
     uint32_t count;
-    bcopy(buffer, &count, sizeof(uint32_t));
+    bcopy((buffer + sizeof(uint32_t)), &count, sizeof(uint32_t));
     for (int idx = 1; idx <= count; idx++) {
       uint32_t networkAddr;
       bcopy((buffer + (idx * sizeof(uint32_t))), &networkAddr, sizeof(uint32_t));
-      /* print to be removed */
       std::cout << "Network Address: " << networkAddr << std::endl;
-      auto localRoute = routeTable_->search((clientAddr.sin_addr.s_addr & 0x00FFFFFF));
-      RouteEntry route(networkAddr, clientAddr.sin_addr.s_addr, 0x00FFFFFF, 
+      if (ospfType == OspfMsgType::ADD || ospfType == OspfMsgType::CASCADED_ADD) {
+        auto localRoute = routeTable_->search((clientAddr.sin_addr.s_addr & 0x00FFFFFF));
+        RouteEntry route(networkAddr, clientAddr.sin_addr.s_addr, 0x00FFFFFF, 
                                                           localRoute->getInterface());
-      routeTable_->insert(route);
+        routeTable_->insert(route);
+        if (ospfType == OspfMsgType::ADD) {
+          /* call the function to send the details further */
+        }
+      } else {
+        /* Delete */
+        if (ospfType == OspfMsgType::DELETE || ospfType == OspfMsgType::CASCADED_DELETE) {
+          routeTable_->remove(networkAddr);
+          if (ospfType == OspfMsgType::DELETE) {
+            /* call the function to delete the details further */
+          }
+        }
+      }
     }
     routeTable_->printRouteTable();
   }
