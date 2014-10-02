@@ -2,6 +2,7 @@
 #include <vector>
 #include <cstdint>
 #include <thread>
+#include <unordered_map>
 
 class RouteTable;
 
@@ -10,6 +11,8 @@ class RouteTable;
 
 static const uint32_t rtr1 = 0x0401A8C0; /* Anuj: 192.168.1.8 */
 static const uint32_t rtr2 = 0x1401A8C0; /* Adhips VM: 192.168.1.20 */
+
+static std::unordered_map<uint32_t, bool> neighborStatus_;
 
 enum class OspfMsgType : uint32_t {
   HELLO = 2,
@@ -29,6 +32,7 @@ class CustomOspf {
 
  private:
   void getMyIpInfo();
+  bool getNeighborStatus(uint32_t addr);
   std::vector<uint32_t> ipVector_;
   RouteTable *routeTable_;
   std::thread receiver_;
