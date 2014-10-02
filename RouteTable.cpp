@@ -264,6 +264,8 @@ void RouteTable::updateKernelRouteTable(RouteEntry entry) {
   ((struct sockaddr_in *) &kRouteEntry.rt_genmask)->sin_family = AF_INET;
 	((struct sockaddr_in *) &kRouteEntry.rt_genmask)->sin_addr.s_addr = entry.getSubnetMask();
 
+  /* set the metric */
+  kRouteEntry.rt_metric = (short) entry.getPriority();
   /* setting the interface */
   kRouteEntry.rt_dev = (char *) entry.getInterface().c_str();
   
