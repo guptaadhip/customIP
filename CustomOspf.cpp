@@ -163,12 +163,17 @@ void CustomOspf::recvInfo() {
     bcopy((buffer + sizeof(uint32_t)), &count, sizeof(uint32_t));
     for (int idx = 1; idx <= count; idx++) {
       uint32_t networkAddr;
+			RoutePriority priority;
       bcopy((buffer + (idx * sizeof(uint32_t))), &networkAddr, sizeof(uint32_t));
       std::cout << "Network Address: " << networkAddr << std::endl;
       if (ospfType == OspfMsgType::ADD || ospfType == OspfMsgType::CASCADED_ADD) {
+				priority = RoutePriority::ADDED;
+				if(ospfType == OspfMsgType::CASCADED_ADD) priority = RoutePriority::CASCADED;
+				
         auto localRoute = routeTable_->search((clientAddr.sin_addr.s_addr & 0x00FFFFFF));
         RouteEntry route(networkAddr, clientAddr.sin_addr.s_addr, 0x00FFFFFF, 
-                                                          localRoute->getInterface());
+                                                   localRoute->getInterface(),
+																										priority);
         routeTable_->insert(route);
         if (ospfType == OspfMsgType::ADD) {
           uint32_t temp = (uint32_t) OspfMsgType::CASCADED_ADD;

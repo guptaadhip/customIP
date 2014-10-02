@@ -21,9 +21,28 @@ RouteTable::RouteTable() {
 
 void RouteTable::insert(RouteEntry entry) {
 	auto check = routeTable_.find(entry.getNwAddress());
-	if(check == routeTable_.end()) {
-  	routeTable_.insert(std::make_pair(entry.getNwAddress(), entry));
+	if(check == routeTable_.cend()) {
+  	routeTable_.insert(routeTableMap_::value_type(entry.getNwAddress(), entry));
+		//routeTable_.insert(std::make_pair(entry.getNwAddress(), entry));
   	updateKernelRouteTable(entry);
+	}else{ //if the key  exists , check if the that entry exists
+		auto elements = routeTable_.equal_range(entry.getNwAddress());
+		bool flag = true;
+		
+		for (auto element = elements.first; element != elements.second; ++element) {	
+			if(element->second.getNwAddress() == entry.getNwAddress() 
+					&& element->second.getSubnetMask() == entry.getSubnetMask() 
+					&& element->second.getInterface() == entry.getInterface() 
+					&& element->second.getNextHop() == entry.getNextHop() ){
+					flag = false;
+					break;
+			}
+		}
+		
+		if(flag){
+			routeTable_.insert(routeTableMap_::value_type(entry.getNwAddress(), entry));
+			updateKernelRouteTable(entry);
+		}
 	}
 }
 
@@ -31,12 +50,11 @@ void RouteTable::insert(RouteEntry entry) {
  * Returns -1 if no match is found 
  */
 RouteEntry * RouteTable::search(uint32_t address) {
-  std::unordered_map<uint32_t,RouteEntry>::iterator match =
-                                                      routeTable_.find(address);
-  if (match == routeTable_.end()) {
+	auto elements = routeTable_.equal_range(address);
+  if (elements.first == elements.second) {
     return nullptr;
   } else {
-    return &match->second;
+		return &elements.first->second;
   }
 }
 
@@ -45,22 +63,73 @@ void RouteTable::addMyRoutes(std::unordered_map<uint32_t, std::string> ipList) {
 	for (auto entry : ipList) {
 		/* to get the network address from the IP we use the subnet mask */
 		RouteEntry route((entry.first & 0x00FFFFFF), 0x00000000, 0x00FFFFFF,
-                                                                  entry.second);
+                                                    entry.second,
+																											RoutePriority::LOCAL);
 		insert(route);
 	}
 }
 
+/* Remove all entry in the Route Table on basis of network address */
 void RouteTable::remove(uint32_t address) {
   routeTable_.erase(address);
 }
 
+/* Remove an entry in the Route Table on basis of next hop */
+void RouteTable::removeEntry(uint32_t nextHop){
+	routeTableMap_::iterator mapIterator;
+	for (mapIterator = routeTable_.begin(); mapIterator!= routeTable_.end();){
+		if (mapIterator->second.getNextHop() == nextHop){
+        routeTable_.erase( mapIterator++ );
+    }else{
+        ++mapIterator;
+    }
+	}
+}
+	
+/* Remove an entry in the Route Table on basis of next hop and interface */
+void RouteTable::removeEntry(uint32_t nextHop,std::string interface){
+	routeTableMap_::iterator mapIterator;
+	for (mapIterator = routeTable_.begin(); mapIterator!= routeTable_.end();){
+		if (mapIterator->second.getNextHop() == nextHop 
+				&& interface.compare(mapIterator->second.getInterface()) == 0){
+        routeTable_.erase( mapIterator++ );
+    }else{
+        ++mapIterator;
+    }
+	}
+}
+	
+/* Remove an entry in the Route Table on basis of network address, next hop and interface */
+void RouteTable::removeEntry(uint32_t address,uint32_t nextHop,
+																											std::string interface){
+	routeTableMap_::iterator mapIterator;
+	for (mapIterator = routeTable_.begin(); mapIterator!= routeTable_.end();){
+		if (mapIterator->second.getNwAddress() == address  
+				&& mapIterator->second.getNextHop() == nextHop
+				&& interface.compare(mapIterator->second.getInterface()) == 0){
+        routeTable_.erase( mapIterator++ );
+    }else{
+        ++mapIterator;
+    }
+	}
+}
+
 /* just for debugging purposes need to be removed */
 void RouteTable::printRouteTable() {
-	for (auto entry : routeTable_) {
-		auto temp = entry.second;
-		cout << temp.getNwAddress() << " " << temp.getNextHop()
-				 << " " << temp.getSubnetMask() << " " << temp.getInterface()
-				 << endl;
+	struct sockaddr_in dest;
+	dest.sin_family = AF_INET;
+	
+	routeTableMap_::iterator mapIterator;
+	for (mapIterator = routeTable_.begin(); mapIterator!= routeTable_.end();
+																											++mapIterator){
+		auto temp = mapIterator->second;
+		dest.sin_addr.s_addr = temp.getNwAddress();
+		cout << inet_ntoa(dest.sin_addr) << "\t" << temp.getNwAddress() << "\t";
+		dest.sin_addr.s_addr = temp.getNextHop();
+		cout << inet_ntoa(dest.sin_addr) << "\t" << temp.getNextHop() << "\t";
+		dest.sin_addr.s_addr = temp.getSubnetMask();
+		cout << inet_ntoa(dest.sin_addr) << "\t" << temp.getSubnetMask() << "\t";
+		cout << "\t" << temp.getInterface() << endl;
 	}
 }
 

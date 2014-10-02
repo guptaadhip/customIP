@@ -25,6 +25,12 @@ enum class IcmpResponse : int {
 	TIME_EXCEEDED = 11,
 };
 
+enum class RoutePriority : int {
+	LOCAL = 0,
+	ADDED = 5,
+	CASCADED = 10,
+};
+
 /* Ethernet header */
 struct ethernetHeader {
 		u_char ethDst[ETHERNET_ADDRESS_LEN];
