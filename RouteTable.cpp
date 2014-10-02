@@ -215,8 +215,7 @@ void RouteTable::removeEntry(uint32_t address,uint32_t nextHop,
 	}
 }
 
-/* Remove an entry in the Route Table on basis of network address, next hop,
-																												interface, priority */
+/* Remove an entry in the Route Table on basis of network address & next hop */
 void RouteTable::removeEntry(uint32_t address,uint32_t nextHop){
 	routeTableMap_::iterator mapIterator;
 	for (mapIterator = routeTable_.begin(); mapIterator!= routeTable_.end();){
