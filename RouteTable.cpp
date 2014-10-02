@@ -46,9 +46,7 @@ void RouteTable::insert(RouteEntry entry) {
 	}
 }
 
-/* 
- * Returns -1 if no match is found 
- */
+/* Search an entry in the Route Table on basis of network address */
 RouteEntry * RouteTable::search(uint32_t address) {
 	auto elements = routeTable_.equal_range(address);
   if (elements.first == elements.second) {
@@ -57,6 +55,66 @@ RouteEntry * RouteTable::search(uint32_t address) {
 		return &elements.first->second;
   }
 }
+
+/* Search all entries in the Route Table on basis of priority */
+std::list<RouteEntry> RouteTable::searchAll(RoutePriority priority) {
+	routeTableMap_::iterator mapIterator;
+	std::list<RouteEntry> returnList;
+	
+	for (mapIterator = routeTable_.begin(); mapIterator!= routeTable_.end();
+                                                              ++mapIterator){
+		if (mapIterator->second.getPriority() == priority){
+      returnList.push_back(mapIterator->second);
+    }
+	}
+	return returnList;
+}
+
+/* Search all entries in the Route Table on basis of next hop */
+std::list<RouteEntry> RouteTable::searchAll(uint32_t nextHop) {
+	routeTableMap_::iterator mapIterator;
+	std::list<RouteEntry> returnList;
+	
+	for (mapIterator = routeTable_.begin(); mapIterator!= routeTable_.end();
+                                                              ++mapIterator){
+		if (mapIterator->second.getNextHop() == nextHop){
+      returnList.push_back(mapIterator->second);
+    }
+	}
+	return returnList;
+}
+
+/* Search all entries in the Route Table on basis of network address 
+																															and priority */
+std::list<RouteEntry> RouteTable::searchAll(uint32_t address,
+	                                                   RoutePriority priority) {
+	routeTableMap_::iterator mapIterator;
+	std::list<RouteEntry> returnList;
+	
+	for (mapIterator = routeTable_.begin(); mapIterator!= routeTable_.end();
+                                                              ++mapIterator){
+		if (mapIterator->second.getNwAddress() == address
+				&& mapIterator->second.getPriority() == priority){
+      returnList.push_back(mapIterator->second);
+    }
+	}
+	return returnList;
+}
+
+/* Search all entries in the Route Table on basis of network address */
+std::list<RouteEntry> RouteTable::searchAllNWAddress(uint32_t address) {
+	routeTableMap_::iterator mapIterator;
+	std::list<RouteEntry> returnList;
+	
+	for (mapIterator = routeTable_.begin(); mapIterator!= routeTable_.end();
+                                                              ++mapIterator){
+		if (mapIterator->second.getNwAddress() == address){
+      returnList.push_back(mapIterator->second);
+    }
+	}
+	return returnList;
+}
+
 
 /* add my ip routes */
 void RouteTable::addMyRoutes(std::unordered_map<uint32_t, std::string> ipList) {
@@ -98,7 +156,7 @@ void RouteTable::removeEntry(uint32_t nextHop,std::string interface){
     }
 	}
 }
-	
+
 /* Remove an entry in the Route Table on basis of network address, next hop and interface */
 void RouteTable::removeEntry(uint32_t address,uint32_t nextHop,
 																											std::string interface){
@@ -111,6 +169,49 @@ void RouteTable::removeEntry(uint32_t address,uint32_t nextHop,
     }else{
         ++mapIterator;
     }
+	}
+}
+
+/* Remove an entry in the Route Table on basis of priority */
+void RouteTable::removeEntry(RoutePriority priority){
+	routeTableMap_::iterator mapIterator;
+	for (mapIterator = routeTable_.begin(); mapIterator!= routeTable_.end();){
+		if (mapIterator->second.getPriority() == priority){
+				routeTable_.erase( mapIterator++ );
+		}else{
+				++mapIterator;
+		}
+	}
+}
+
+/* Remove an entry in the Route Table on basis of network address & priority */
+void RouteTable::removeEntry(uint32_t address, RoutePriority priority){
+	routeTableMap_::iterator mapIterator;
+	for (mapIterator = routeTable_.begin(); mapIterator!= routeTable_.end();){
+		if (mapIterator->second.getNwAddress() == address  
+				&& mapIterator->second.getPriority() == priority){
+				routeTable_.erase( mapIterator++ );
+		}else{
+				++mapIterator;
+		}
+	}
+}
+
+/* Remove an entry in the Route Table on basis of network address, next hop,
+																												interface, priority */
+void RouteTable::removeEntry(uint32_t address,uint32_t nextHop,
+																								 std::string interface,
+																									RoutePriority priority){
+	routeTableMap_::iterator mapIterator;
+	for (mapIterator = routeTable_.begin(); mapIterator!= routeTable_.end();){
+		if (mapIterator->second.getNwAddress() == address  
+				&& mapIterator->second.getNextHop() == nextHop
+				&& mapIterator->second.getPriority() == priority
+				&& interface.compare(mapIterator->second.getInterface()) == 0){
+				routeTable_.erase( mapIterator++ );
+		}else{
+				++mapIterator;
+		}
 	}
 }
 
