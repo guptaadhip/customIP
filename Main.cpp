@@ -66,19 +66,23 @@ void startSniffing(std::string device){
 int main() {
   std::vector<std::thread> threads;
 	
+	packetEngine.setMyIps(myIps);
   routeTable.addMyRoutes(myIps.getMyIps());
   /* get local network */
   NetworkHandler networkHandler(&myIps,&packetEngine);
+	//routeTable.printRouteTable();
+	
   /* get non-local networks */
   CustomOspf ospf(&routeTable); 
   ospf.start();
   
-  //Sniffer sniff("eth1");
+  //Sniffer sniff("eth0");
   //sniff.registerCallback(callbackHandler);
 	
   for(auto entry : myIps.getMyIps()){
     threads.push_back(std::thread(startSniffing,entry.second));
   }
+  
   for (auto& joinThreads : threads) joinThreads.join();
   return 0;
 }

@@ -23,7 +23,6 @@ void RouteTable::insert(RouteEntry entry) {
 	auto check = routeTable_.find(entry.getNwAddress());
 	if(check == routeTable_.cend()) {
   	routeTable_.insert(routeTableMap_::value_type(entry.getNwAddress(), entry));
-		//routeTable_.insert(std::make_pair(entry.getNwAddress(), entry));
   	updateKernelRouteTable(entry);
 	}else{ //if the key  exists , check if the that entry exists
 		auto elements = routeTable_.equal_range(entry.getNwAddress());

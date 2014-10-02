@@ -1,5 +1,6 @@
 #include "include/PacketEngine.h"
 #include "include/net.h"
+#include "include/MyIp.h"
 #include <sys/socket.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
@@ -25,6 +26,11 @@ PacketEngine::PacketEngine() {
     exit(1);
   }
 }
+
+void PacketEngine::setMyIps(MyIp myIps){
+	this->myIps_ = myIps;
+}
+
 void PacketEngine::forwardPacket(const u_char *packet, uint32_t nextHopAddr) {
 	struct ipHeader *ip = (struct ipHeader *) (packet + ETHERNET_HEADER_LEN);
 	struct sockaddr_in dest;
@@ -72,9 +78,16 @@ void PacketEngine::responsePacket(const u_char *packet, IcmpResponse type) {
   tempIp->ipOffset = 0x0;
   tempIp->ipTtl = 64;
   tempIp->ipProto = icmpProto;
-  tempIp->ipSrc.s_addr = ip->ipDst.s_addr;
-  tempIp->ipDst.s_addr = ip->ipSrc.s_addr;
-  tempIp->ipChecksum = 0;
+	if(type == IcmpResponse::DESTINATION_UNREACHABLE){
+		tempIp->ipSrc.s_addr = this->myIps_.getMyIpUsingNetworkAddress
+                                                ((ip->ipSrc.s_addr & SUBNET));
+	}else{
+		tempIp->ipSrc.s_addr = ip->ipDst.s_addr;
+	}
+  
+	tempIp->ipDst.s_addr = ip->ipSrc.s_addr;
+  
+	tempIp->ipChecksum = 0;
   tempIp->ipChecksum = checksum ((uint16_t *) tempIp, IP_HEADER_LEN);
 	/* End IP Header Creation */
 

@@ -18,6 +18,8 @@ static const uint32_t INCREMENT_IP = 0x01000000;
 static const uint32_t LOOPBACK_IP = 0x0100007f; /* loopback */
 static const uint32_t CONTROL_NW_IP = 0x0000A8C0; /* Deter control Nw IP */
 
+static const uint32_t SUBNET = 0x00FFFFFF; /* SubNet Mask Address */
+
 enum class IcmpResponse : int {
 	ECHO_REPLY = 0,
 	DESTINATION_UNREACHABLE = 3,
