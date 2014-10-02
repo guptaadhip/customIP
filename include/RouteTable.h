@@ -53,6 +53,9 @@ class RouteTable {
 	/* Remove an entry in the Route Table on basis of network address, next hop, interface, priority */
 	void removeEntry(uint32_t,uint32_t,std::string,RoutePriority);
 	
+	/* Remove an entry in the Route Table on basis of network address & next hop */
+	void removeEntry(uint32_t,uint32_t);
+	
   /* just for debugging purposes need to be removed */
   void printRouteTable();
   
