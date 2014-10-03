@@ -83,20 +83,21 @@ void CustomOspf::sendInfo(uint32_t addr) {
   while(true) {
     sleep(1);
     
-    if(neighborStatus_[addr] == false) {
+    if(neighborStatus_[addr] == false)
       strikeCount++;    // false status, so increase strikeCount
-    } else if (strikeCount < 3) {
+    else if (strikeCount < 3)
       strikeCount = 0;
-    }
 
     if(neighborStatus_[addr] == true && strikeCount > 3) {
       /* Link came back up after going down.
       *  ADD MESSAGE : Prepare the link back up message. */
       ospfType = (uint32_t) OspfMsgType::ADD; 
       bcopy(&ospfType, buffer, sizeof(uint32_t));
-      int idx = sizeof(uint32_t);
+      int idx = (sizeof(uint32_t) * 2);
+      uint32_t addCount = 0;
 
       /* Sending non-cascaded entries */
+      
       /* adding the "local" entries */
       uint32_t localNwAddr;
       routePriority = (int) RoutePriority::LOCAL;
@@ -104,6 +105,7 @@ void CustomOspf::sendInfo(uint32_t addr) {
       for(auto localEntry : localEntries) {
         localNwAddr = localEntry.getNwAddress();
         bcopy(&localNwAddr, (buffer + idx), sizeof(uint32_t)); 
+        addCount++;
         idx += sizeof(uint32_t);
       }
 
@@ -114,15 +116,21 @@ void CustomOspf::sendInfo(uint32_t addr) {
       for(auto addedEntry : addedEntries) {
         addedNwAddr = addedEntry.getNwAddress();
         bcopy(&addedNwAddr, (buffer + idx), sizeof(uint32_t)); 
+        addCount++;
         idx += sizeof(uint32_t);
       }
       strikeCount = 0;
+
+      /* Calculated the count. Now putting it in buffer */
+      bcopy(&addCount, (buffer + sizeof(uint32_t)), sizeof(uint32_t));
       sendUpdate(buffer, addr);
+
     } else if(strikeCount == 3) {
       /* DELETE MESSAGE : Prepare the link down message */
       ospfType = (uint32_t) OspfMsgType::DELETE;
       bcopy(&ospfType, buffer, sizeof(uint32_t));
       int idx = sizeof(uint32_t);
+      uint32_t deleteCount = 0;
 
       /* Deleting entries with addr as nextHop */
       std::list<RouteEntry> nextHopInvalidEntries = routeTable_->searchAll(addr);
@@ -130,28 +138,33 @@ void CustomOspf::sendInfo(uint32_t addr) {
       for(auto entry : nextHopInvalidEntries) {
         nwAddr = entry.getNwAddress();
         bcopy(&nwAddr, (buffer + idx), sizeof(uint32_t)); 
+        deleteCount++;
         idx += sizeof(uint32_t);
       }
       /* Deleting all entries with addr as next hop. */
       routeTable_->removeEntry(addr);
 
-      /* Deleting entries with addr as nwAddress and 0.0.0.0 as next Hop */
+      /* Deleting entry with addr as nwAddress and 0.0.0.0 as next Hop */
       std::list<RouteEntry> addrDirectInvalidEntries = routeTable_->searchAllNWAddress(addr);
       uint32_t directAddr;
       for(auto directEntry : addrDirectInvalidEntries) {
         if(directEntry.getNextHop() == 0x00000000) {
           directAddr = directEntry.getNwAddress();
           bcopy(&directAddr, (buffer + idx), sizeof(uint32_t));
+          deleteCount++;
           routeTable_->removeEntry(directEntry.getNwAddress(), directEntry.getNextHop());
           break;
         }
       }
-      /* changing the "addr" for server entry */
-      if (addr == rtr1) {
+
+      /* Calculated the count. Now putting it in buffer */
+      bcopy(&deleteCount, (buffer + sizeof(uint32_t)), sizeof(uint32_t));
+
+      /* now sending the delete message */
+      if(addr == rtr1)
         sendUpdate(buffer, rtr2);
-      } else {
+      else
         sendUpdate(buffer, rtr1);
-      }
     } else {
       /* HELLO MESSAGE : Prepare the hello message */
       ospfType = (uint32_t) OspfMsgType::HELLO;
@@ -241,7 +254,7 @@ void CustomOspf::recvInfo() {
         RouteEntry route(networkAddr, clientAddr.sin_addr.s_addr, 0x00FFFFFF, 
                                                    localRoute->getInterface(),
 																										priority);
-        routeTable_->insert(route);
+        routeTable_->insert(route);                                                     // INSERT CALLED HERE
         if (ospfType == OspfMsgType::ADD) {
           uint32_t temp = (uint32_t) OspfMsgType::CASCADED_ADD;
           /* update the type */
