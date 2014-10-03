@@ -244,7 +244,7 @@ void CustomOspf::recvInfo() {
     for (int idx = 1; idx <= count; idx++) {
       uint32_t networkAddr;
       RoutePriority priority;
-      bcopy((buffer + (idx * sizeof(uint32_t))), &networkAddr, sizeof(uint32_t));
+      bcopy((buffer + ((idx + 1) * sizeof(uint32_t))), &networkAddr, sizeof(uint32_t));
       std::cout << "Network Address: " << networkAddr << std::endl;
       if (ospfType == OspfMsgType::ADD || ospfType == OspfMsgType::CASCADED_ADD) {
 				priority = RoutePriority::ADDED;
