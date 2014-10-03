@@ -30,8 +30,8 @@ class CustomOspf {
   void sendUpdate(char *buffer, uint32_t addr);
 
  private:
-  const uint32_t rtr1_; 
-  const uint32_t rtr2_; 
+  uint32_t rtr1_; 
+  uint32_t rtr2_; 
 
   void getMyIpInfo();
   bool getNeighborStatus(uint32_t addr);
