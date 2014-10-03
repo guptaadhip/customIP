@@ -70,7 +70,7 @@ void CustomOspf::sendInfo(uint32_t addr) {
   int i = sizeof(uint32_t);
   uint32_t count = ipVector_.size();
   bcopy(&count, (buffer + i), sizeof(uint32_t));
-  i = sizeof(uint32_t);
+  i += sizeof(uint32_t);
   for(auto ipAddr : ipVector_) {
     uint32_t networkIP = ipAddr & 0x00ffffff;
     bcopy(&networkIP, (buffer + i), sizeof(uint32_t));
@@ -216,11 +216,7 @@ void CustomOspf::recvInfo() {
     }
 
     /* I just received a message -> So update the status to true */
-    auto it = neighborStatus_.find(clientAddr.sin_addr.s_addr);
-    if(it != neighborStatus_.end()) 
-    it->second = true;
-    else
-    neighborStatus_.insert (std::make_pair<uint32_t, bool>((uint32_t)clientAddr.sin_addr.s_addr,true));
+    neighborStatus_[clientAddr.sin_addr.s_addr] = true;
 
     OspfMsgType ospfType;
     bcopy(buffer, &ospfType, sizeof(uint32_t));
@@ -234,7 +230,7 @@ void CustomOspf::recvInfo() {
     bcopy((buffer + sizeof(uint32_t)), &count, sizeof(uint32_t));
     for (int idx = 1; idx <= count; idx++) {
       uint32_t networkAddr;
-			RoutePriority priority;
+      RoutePriority priority;
       bcopy((buffer + (idx * sizeof(uint32_t))), &networkAddr, sizeof(uint32_t));
       std::cout << "Network Address: " << networkAddr << std::endl;
       if (ospfType == OspfMsgType::ADD || ospfType == OspfMsgType::CASCADED_ADD) {
