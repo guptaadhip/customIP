@@ -189,7 +189,7 @@ void CustomOspf::sendUpdate(char *buffer, uint32_t addr) {
   serverAddr.sin_port = htons(OSPF_PORT);
   serverAddrLength = sizeof(serverAddr);
 
-  auto rc = sendto(sendSocket_, buffer, sizeof(buffer), 0,
+  auto rc = sendto(sendSocket_, buffer, BUFLEN, 0,
                       (struct sockaddr *) &serverAddr, serverAddrLength);
   if (rc < 0) {  
     std::cout << "Custom OSPF: Error Sending Update Data" << std::endl;
