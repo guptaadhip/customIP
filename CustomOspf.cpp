@@ -241,10 +241,11 @@ void CustomOspf::recvInfo() {
 
     uint32_t count;
     bcopy((buffer + sizeof(uint32_t)), &count, sizeof(uint32_t));
+    uint32_t bufPtr = sizeof(uint32_t) + sizeof(uint32_t);
     for (int idx = 1; idx <= count; idx++) {
       uint32_t networkAddr;
       RoutePriority priority;
-      bcopy((buffer + ((idx + 1) * sizeof(uint32_t))), &networkAddr, sizeof(uint32_t));
+      bcopy((buffer + bufPtr), &networkAddr, sizeof(uint32_t));
       std::cout << "Network Address: " << networkAddr << std::endl;
       if (ospfType == OspfMsgType::ADD || ospfType == OspfMsgType::CASCADED_ADD) {
 				if(ospfType == OspfMsgType::CASCADED_ADD) {
@@ -266,6 +267,7 @@ void CustomOspf::recvInfo() {
         /* Delete */
         routeTable_->removeEntry(networkAddr, clientAddr.sin_addr.s_addr, priority);
       }
+      bufPtr = bufPtr + sizeof(uint32_t);
     }
     std::cout << "Printing Route Table: " << std::endl;
     routeTable_->printRouteTable();
