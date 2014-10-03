@@ -56,9 +56,9 @@ RouteEntry * RouteTable::search(uint32_t address) {
 }
 
 /* Search all entries in the Route Table on basis of priority */
-std::list<RouteEntry> RouteTable::searchAll(RoutePriority priority) {
+std::vector<RouteEntry> RouteTable::searchAll(RoutePriority priority) {
 	routeTableMap_::iterator mapIterator;
-	std::list<RouteEntry> returnList;
+	std::vector<RouteEntry> returnList;
 	
 	for (mapIterator = routeTable_.begin(); mapIterator!= routeTable_.end();
                                                               ++mapIterator){
@@ -70,9 +70,9 @@ std::list<RouteEntry> RouteTable::searchAll(RoutePriority priority) {
 }
 
 /* Search all entries in the Route Table on basis of next hop */
-std::list<RouteEntry> RouteTable::searchAll(uint32_t nextHop) {
+std::vector<RouteEntry> RouteTable::searchAll(uint32_t nextHop) {
 	routeTableMap_::iterator mapIterator;
-	std::list<RouteEntry> returnList;
+	std::vector<RouteEntry> returnList;
 	
 	for (mapIterator = routeTable_.begin(); mapIterator!= routeTable_.end();
                                                               ++mapIterator){
@@ -85,10 +85,10 @@ std::list<RouteEntry> RouteTable::searchAll(uint32_t nextHop) {
 
 /* Search all entries in the Route Table on basis of network address 
 																															and priority */
-std::list<RouteEntry> RouteTable::searchAll(uint32_t address,
+std::vector<RouteEntry> RouteTable::searchAll(uint32_t address,
 	                                                   RoutePriority priority) {
 	routeTableMap_::iterator mapIterator;
-	std::list<RouteEntry> returnList;
+	std::vector<RouteEntry> returnList;
 	
 	for (mapIterator = routeTable_.begin(); mapIterator!= routeTable_.end();
                                                               ++mapIterator){
@@ -101,9 +101,9 @@ std::list<RouteEntry> RouteTable::searchAll(uint32_t address,
 }
 
 /* Search all entries in the Route Table on basis of network address */
-std::list<RouteEntry> RouteTable::searchAllNWAddress(uint32_t address) {
+std::vector<RouteEntry> RouteTable::searchAllNWAddress(uint32_t address) {
 	routeTableMap_::iterator mapIterator;
-	std::list<RouteEntry> returnList;
+	std::vector<RouteEntry> returnList;
 	
 	for (mapIterator = routeTable_.begin(); mapIterator!= routeTable_.end();
                                                               ++mapIterator){
@@ -210,6 +210,21 @@ void RouteTable::removeEntry(uint32_t address,uint32_t nextHop,
 				routeTable_.erase( mapIterator++ );
 		}else{
 				++mapIterator;
+		}
+	}
+}
+
+void RouteTable::removeEntry(uint32_t address,uint32_t nextHop,
+																									RoutePriority priority) {
+	routeTableMap_::iterator mapIterator;
+	for (mapIterator = routeTable_.begin(); mapIterator!= routeTable_.end();) {
+		if (mapIterator->second.getNwAddress() == address  
+				&& mapIterator->second.getNextHop() == nextHop
+				&& mapIterator->second.getPriority() == priority) {
+				
+      routeTable_.erase( mapIterator++ );
+		} else {
+      ++mapIterator;
 		}
 	}
 }

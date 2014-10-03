@@ -101,7 +101,7 @@ void CustomOspf::sendInfo(uint32_t addr) {
       /* adding the "local" entries */
       uint32_t localNwAddr;
       routePriority = (int) RoutePriority::LOCAL;
-      std::list<RouteEntry> localEntries = routeTable_->searchAll(routePriority);
+      auto localEntries = routeTable_->searchAll(routePriority);
       for(auto localEntry : localEntries) {
         localNwAddr = localEntry.getNwAddress();
         bcopy(&localNwAddr, (buffer + idx), sizeof(uint32_t)); 
@@ -111,8 +111,8 @@ void CustomOspf::sendInfo(uint32_t addr) {
 
       /* adding the "added" entries */
       uint32_t addedNwAddr;
-      routePriority = (int) RoutePriority::ADDED;
-      std::list<RouteEntry> addedEntries = routeTable_->searchAll(routePriority);
+      routePriority = (int) RoutePriority::DIRECT;
+      auto addedEntries = routeTable_->searchAll(routePriority);
       for(auto addedEntry : addedEntries) {
         addedNwAddr = addedEntry.getNwAddress();
         bcopy(&addedNwAddr, (buffer + idx), sizeof(uint32_t)); 
@@ -133,7 +133,7 @@ void CustomOspf::sendInfo(uint32_t addr) {
       uint32_t deleteCount = 0;
 
       /* Deleting entries with addr as nextHop */
-      std::list<RouteEntry> nextHopInvalidEntries = routeTable_->searchAll(addr);
+      auto nextHopInvalidEntries = routeTable_->searchAll(addr);
       uint32_t nwAddr;
       for(auto entry : nextHopInvalidEntries) {
         nwAddr = entry.getNwAddress();
@@ -145,7 +145,7 @@ void CustomOspf::sendInfo(uint32_t addr) {
       routeTable_->removeEntry(addr);
 
       /* Deleting entry with addr as nwAddress and 0.0.0.0 as next Hop */
-      std::list<RouteEntry> addrDirectInvalidEntries = routeTable_->searchAllNWAddress(addr);
+      auto addrDirectInvalidEntries = routeTable_->searchAllNWAddress(addr);
       uint32_t directAddr;
       for(auto directEntry : addrDirectInvalidEntries) {
         if(directEntry.getNextHop() == 0x00000000) {
@@ -247,41 +247,49 @@ void CustomOspf::recvInfo() {
       bcopy((buffer + ((idx + 1) * sizeof(uint32_t))), &networkAddr, sizeof(uint32_t));
       std::cout << "Network Address: " << networkAddr << std::endl;
       if (ospfType == OspfMsgType::ADD || ospfType == OspfMsgType::CASCADED_ADD) {
-				priority = RoutePriority::ADDED;
-				if(ospfType == OspfMsgType::CASCADED_ADD) priority = RoutePriority::CASCADED;
+				if(ospfType == OspfMsgType::CASCADED_ADD) {
+          priority = RoutePriority::CASCADED;
+        } else {
+          priority = RoutePriority::DIRECT;
+        }
 				
         auto localRoute = routeTable_->search((clientAddr.sin_addr.s_addr & 0x00FFFFFF));
         RouteEntry route(networkAddr, clientAddr.sin_addr.s_addr, 0x00FFFFFF, 
-                                                   localRoute->getInterface(),
-																										priority);
-        routeTable_->insert(route);                                                     // INSERT CALLED HERE
-        if (ospfType == OspfMsgType::ADD) {
-          uint32_t temp = (uint32_t) OspfMsgType::CASCADED_ADD;
-          /* update the type */
-          bcopy(&temp, buffer, sizeof(uint32_t));
-          /* send on the interface from where the update was not received */
-          if (clientAddr.sin_addr.s_addr == rtr1) {
-            sendUpdate(buffer, rtr2);
-          } else {
-            sendUpdate(buffer, rtr1);
-          }
-        }
+                                      localRoute[0].getInterface(), priority);
+        routeTable_->insert(route);     
       } else {
-        /* Delete */
-        routeTable_->remove(networkAddr);
-        if (ospfType == OspfMsgType::DELETE) {
-          uint32_t temp = (uint32_t) OspfMsgType::CASCADED_DELETE;
-          /* update the type */
-          bcopy(&temp, buffer, sizeof(uint32_t));
-          /* send on the interface from where the update was not received */
-          if (clientAddr.sin_addr.s_addr == rtr1) {
-            sendUpdate(buffer, rtr2);
-          } else {
-            sendUpdate(buffer, rtr1);
-          }
+				if(ospfType == OspfMsgType::CASCADED_DELETE) {
+          priority = RoutePriority::CASCADED;
+        } else {
+          priority = RoutePriority::DIRECT;
         }
+        /* Delete */
+        routeTable_->removeEntry(networkAddr, clientAddr.sin_addr.s_addr, priority);
       }
     }
+    std::cout << "Printing Route Table: " << std::endl;
     routeTable_->printRouteTable();
+    std::cout << std::endl;
+
+    if (ospfType == OspfMsgType::ADD) {
+      std::cout << "Sending cascaded Add" << std::endl;
+      uint32_t temp = (uint32_t) OspfMsgType::CASCADED_ADD;
+      /* update the type */
+      bcopy(&temp, buffer, sizeof(uint32_t));
+    } else if (ospfType == OspfMsgType::DELETE) {
+      std::cout << "Sending cascaded Delete" << std::endl;
+      uint32_t temp = (uint32_t) OspfMsgType::CASCADED_DELETE;
+      /* update the type */
+      bcopy(&temp, buffer, sizeof(uint32_t));
+    }
+    if (ospfType == OspfMsgType::ADD || ospfType == OspfMsgType::DELETE) {
+      std::cout << "Sending cascaded update" << std::endl;
+      /* send on the interface from where the update was not received */
+      if (clientAddr.sin_addr.s_addr == rtr1) {
+        sendUpdate(buffer, rtr2);
+      } else {
+        sendUpdate(buffer, rtr1);
+      }
+    }
   }
 }

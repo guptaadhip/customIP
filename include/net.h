@@ -29,7 +29,7 @@ enum class IcmpResponse : int {
 
 enum class RoutePriority : int {
 	LOCAL = 10,
-	ADDED = 5,
+	DIRECT = 5,
 	CASCADED = 0,
 };
 

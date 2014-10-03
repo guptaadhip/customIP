@@ -3,7 +3,7 @@
 #include "net.h"
 #include <unordered_map>
 #include <cstdint>
-#include <list>
+#include <vector>
 
 /* Ip Table Entry Object */
 class RouteTable {
@@ -20,17 +20,17 @@ class RouteTable {
   RouteEntry * search(uint32_t);
 	
 	/* Search all entries in the Route Table on basis of priority */
-	std::list<RouteEntry> searchAll(RoutePriority);
+	std::vector<RouteEntry> searchAll(RoutePriority);
 	
 	/* Search all entries in the Route Table on basis of next hop */
-	std::list<RouteEntry> searchAll(uint32_t);
+	std::vector<RouteEntry> searchAll(uint32_t);
 	
 	/* Search all entries in the Route Table on basis of network 
 																								address and priority */
-	std::list<RouteEntry> searchAll(uint32_t,RoutePriority);
+	std::vector<RouteEntry> searchAll(uint32_t, RoutePriority);
 
 	/* Search all entries in the Route Table on basis of network address */
-	std::list<RouteEntry> searchAllNWAddress(uint32_t);
+	std::vector<RouteEntry> searchAllNWAddress(uint32_t);
 	
   /* Remove all entry in the Route Table on basis of network address */
   void remove(uint32_t);
@@ -55,6 +55,8 @@ class RouteTable {
 	
 	/* Remove an entry in the Route Table on basis of network address & next hop */
 	void removeEntry(uint32_t,uint32_t);
+	
+  void removeEntry(uint32_t, uint32_t, RoutePriority);
 	
   /* just for debugging purposes need to be removed */
   void printRouteTable();
