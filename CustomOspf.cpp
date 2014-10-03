@@ -13,7 +13,9 @@
 /* to be removed */
 #include <iostream>
 
-CustomOspf::CustomOspf(RouteTable *routeTable) {
+CustomOspf::CustomOspf(RouteTable *routeTable, uint32_t rtr1, uint32_t rtr2) 
+  : rtr1_(rtr1),
+    rtr2_(rtr2) {
   routeTable_ = routeTable;
   getMyIpInfo();
 
@@ -25,8 +27,8 @@ CustomOspf::CustomOspf(RouteTable *routeTable) {
   }
 
   /* Initialzing neighbour status */
-  neighborStatus_[rtr1] = false;
-  neighborStatus_[rtr2] = false; 
+  neighborStatus_[rtr1_] = false;
+  neighborStatus_[rtr2_] = false; 
 }
 
 /* lets do the OSPF */
@@ -34,9 +36,12 @@ void CustomOspf::start() {
   /* Receiver Thread */
   receiver_ = std::thread(std::bind(&CustomOspf::recvInfo,this));
   /* Initial Sender Thread */
-  sender_ = std::thread(std::bind(&CustomOspf::sendInfo,this, rtr1));
-  /* Initial Sender 2 Thread */
-  sender2_ = std::thread(std::bind(&CustomOspf::sendInfo,this, rtr2));
+  sender_ = std::thread(std::bind(&CustomOspf::sendInfo,this, rtr1_));
+  /* if rtr 2 is 0 then only one neighbor was passed */
+  if (rtr2_ != 0) {
+    /* Initial Sender 2 Thread */
+    sender2_ = std::thread(std::bind(&CustomOspf::sendInfo,this, rtr2_));
+  }
 }
 
 void CustomOspf::getMyIpInfo() {
@@ -161,10 +166,10 @@ void CustomOspf::sendInfo(uint32_t addr) {
       bcopy(&deleteCount, (buffer + sizeof(uint32_t)), sizeof(uint32_t));
 
       /* now sending the delete message */
-      if(addr == rtr1)
-        sendUpdate(buffer, rtr2);
+      if(addr == rtr1_)
+        sendUpdate(buffer, rtr2_);
       else
-        sendUpdate(buffer, rtr1);
+        sendUpdate(buffer, rtr1_);
     } else {
       /* HELLO MESSAGE : Prepare the hello message */
       ospfType = (uint32_t) OspfMsgType::HELLO;
@@ -287,10 +292,10 @@ void CustomOspf::recvInfo() {
     if (ospfType == OspfMsgType::ADD || ospfType == OspfMsgType::DELETE) {
       std::cout << "Sending cascaded update" << std::endl;
       /* send on the interface from where the update was not received */
-      if (clientAddr.sin_addr.s_addr == rtr1) {
-        sendUpdate(buffer, rtr2);
+      if (clientAddr.sin_addr.s_addr == rtr1_) {
+        sendUpdate(buffer, rtr2_);
       } else {
-        sendUpdate(buffer, rtr1);
+        sendUpdate(buffer, rtr1_);
       }
     }
   }

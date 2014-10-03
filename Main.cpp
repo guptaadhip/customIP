@@ -63,8 +63,9 @@ void startSniffing(std::string device){
   sniff.registerCallback(callbackHandler);
 }
 
-int main() {
+int main(int argv, char *args[]) {
   std::vector<std::thread> threads;
+  uint32_t rtr1, rtr2;
 	
 	packetEngine.setMyIps(myIps);
   routeTable.addMyRoutes(myIps.getMyIps());
@@ -72,10 +73,23 @@ int main() {
   NetworkHandler networkHandler(&myIps,&packetEngine);
 	//routeTable.printRouteTable();
 	
-  /* get non-local networks */
-  CustomOspf ospf(&routeTable); 
-  ospf.start();
-  
+  /* OSPF needs to only start if the router has any neighbor routers */
+  if (argv > 0) {
+    /* get non-local networks */
+    if (argv == 1) {
+      rtr1 = (uint32_t) atoi(args[0]);
+    } else if (argv == 2) {
+      rtr1 = (uint32_t) atoi(args[0]);
+      rtr2 = (uint32_t) atoi(args[1]);
+    } else {
+      cout << "Max number of Neighbors can be 2" << endl;
+    }
+    /* TBD: Remove */
+    cout << "Neighbor 1: " << rtr1 << " :: Neighbor 2: " << rtr2;
+    CustomOspf ospf(&routeTable, rtr1, rtr2); 
+    ospf.start();
+  }
+
   //Sniffer sniff("eth0");
   //sniff.registerCallback(callbackHandler);
 	
