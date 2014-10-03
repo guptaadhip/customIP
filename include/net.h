@@ -28,9 +28,9 @@ enum class IcmpResponse : int {
 };
 
 enum class RoutePriority : int {
-	LOCAL = 0,
+	LOCAL = 10,
 	ADDED = 5,
-	CASCADED = 10,
+	CASCADED = 0,
 };
 
 /* Ethernet header */
