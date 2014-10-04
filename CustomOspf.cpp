@@ -101,105 +101,62 @@ void CustomOspf::sendInfo(uint32_t addr) {
     std::cout << "Custom OSPF: Error Sending Update Data" << std::endl;
   } 
 
-  return;
   while(true) {
     sleep(1);
     
-    if(neighborStatus_[addr] == false)
-      strikeCount++;    // false status, so increase strikeCount
-    else if (strikeCount < 3)
-      strikeCount = 0;
-
-    if(neighborStatus_[addr] == true && strikeCount > 3) {
-      /* Link came back up after going down.
-      *  ADD MESSAGE : Prepare the link back up message. */
-      ospfType = (uint32_t) OspfMsgType::ADD; 
-      bcopy(&ospfType, buffer, sizeof(uint32_t));
-      int idx = (sizeof(uint32_t) * 2);
-      uint32_t addCount = 0;
-
-      /* Sending non-cascaded entries */
-      
-      /* adding the "local" entries */
-      uint32_t localNwAddr;
-      routePriority = (int) RoutePriority::LOCAL;
-      auto localEntries = routeTable_->searchAll(routePriority);
-      for(auto localEntry : localEntries) {
-        localNwAddr = localEntry.getNwAddress();
-        bcopy(&localNwAddr, (buffer + idx), sizeof(uint32_t)); 
-        addCount++;
-        idx += sizeof(uint32_t);
-      }
-
-      /* adding the "added" entries */
-      uint32_t addedNwAddr;
-      routePriority = (int) RoutePriority::DIRECT;
-      auto addedEntries = routeTable_->searchAll(routePriority);
-      for(auto addedEntry : addedEntries) {
-        addedNwAddr = addedEntry.getNwAddress();
-        bcopy(&addedNwAddr, (buffer + idx), sizeof(uint32_t)); 
-        addCount++;
-        idx += sizeof(uint32_t);
-      }
-      strikeCount = 0;
-
-      /* Calculated the count. Now putting it in buffer */
-      bcopy(&addCount, (buffer + sizeof(uint32_t)), sizeof(uint32_t));
-      sendUpdate(buffer, addr);
-
-    } else if(strikeCount == 3) {
-      /* DELETE MESSAGE : Prepare the link down message */
-      ospfType = (uint32_t) OspfMsgType::DELETE;
-      bcopy(&ospfType, buffer, sizeof(uint32_t));
-      int idx = sizeof(uint32_t);
-      uint32_t deleteCount = 0;
-
-      /* Deleting entries with addr as nextHop */
-      auto nextHopInvalidEntries = routeTable_->searchAll(addr);
-      uint32_t nwAddr;
-      for(auto entry : nextHopInvalidEntries) {
-        nwAddr = entry.getNwAddress();
-        bcopy(&nwAddr, (buffer + idx), sizeof(uint32_t)); 
-        deleteCount++;
-        idx += sizeof(uint32_t);
-      }
-      /* Deleting all entries with addr as next hop. */
-      routeTable_->removeEntry(addr);
-
-      /* Deleting entry with addr as nwAddress and 0.0.0.0 as next Hop */
-      auto addrDirectInvalidEntries = routeTable_->searchAllNWAddress(addr);
-      uint32_t directAddr;
-      for(auto directEntry : addrDirectInvalidEntries) {
-        if(directEntry.getNextHop() == 0x00000000) {
-          directAddr = directEntry.getNwAddress();
-          bcopy(&directAddr, (buffer + idx), sizeof(uint32_t));
-          deleteCount++;
-          routeTable_->removeEntry(directEntry.getNwAddress(), directEntry.getNextHop());
-          break;
-        }
-      }
-
-      /* Calculated the count. Now putting it in buffer */
-      bcopy(&deleteCount, (buffer + sizeof(uint32_t)), sizeof(uint32_t));
-
-      /* now sending the delete message */
-      if(addr == rtr1_)
-        sendUpdate(buffer, rtr2_);
-      else
-        sendUpdate(buffer, rtr1_);
-    } else {
-      /* HELLO MESSAGE : Prepare the hello message */
-      ospfType = (uint32_t) OspfMsgType::HELLO;
-      bcopy(&ospfType, buffer, sizeof(uint32_t));
-      sendUpdate(buffer, addr);
+    /* cant reach network lets increase the strike */
+    if (neighborStatus_[addr] == false) {
+        strikeCount++;
     }
+
+    /* Zero the buffer everytime */
+    bzero((char *) buffer, sizeof(buffer));
+    
+    /* Strike = 3! Executing delete sequence */ 
+    if(strikeCount == 3) {
+        std::cout << "My link is down to addr" << addr;
+	/* Time to send delete message */
+
+	/* Step 1: Get all entries with addr as next hop 
+	*  and also delete them.
+	*/
+       // auto deleteEntries = removeEntry(addr);
+	
+	/* Step 2 : Fill buffer with all the entries */	
+  	/*ospfType = (uint32_t) OspfMsgType::DELETE; 
+ 	bcopy(&ospfType, buffer, sizeof(uint32_t));
+  	int i = sizeof(uint32_t);
+  	uint32_t count = deleteEntries.size();
+  	bcopy(&count, (buffer + i), sizeof(uint32_t));
+ 	i += sizeof(uint32_t);
+  	for(auto entry : deleteEntries) {
+    	  uint32_t networkIP = entry.getNwAddress();
+    	  bcopy(&networkIP, (buffer + i), sizeof(uint32_t));
+    	  i += sizeof(uint32_t);
+	}*/
+	/* Delete message's buffer ready. */ 
+    }
+    
+    /* Line came back up! We are back in the game */
+    if(neighborStatus_[addr] == true && strikeCount > 3) {
+	strikeCount = 0;
+	
+        std::cout << "My link is up to addr" << addr;
+	/* Time to send link up message */
+	
+    }
+    
+    
+    /* HELLO MESSAGE : Prepare the hello message */
+    ospfType = (uint32_t) OspfMsgType::HELLO;
+    bcopy(&ospfType, buffer, sizeof(uint32_t));
+    auto rc = sendto(socketfd, buffer, BUFLEN, 0,
+                      (struct sockaddr *) &serverAddr, serverAddrLength);
+    if (rc < 0) {  
+      std::cout << "Custom OSPF: Error Sending Update Data" << std::endl;
+    } 
     neighborStatus_[addr] = false;
   }
-}
-
-void CustomOspf::sendUpdate(char *buffer, uint32_t addr) {
-  
-
 }
 
 void CustomOspf::recvInfo() {
@@ -262,6 +219,7 @@ void CustomOspf::recvInfo() {
     /* do the stuff for hello */
     if (ospfType == OspfMsgType::HELLO) {
       /* no need to go further */
+      std::cout << "Got Hello!!! yello!!!" << std::endl;
       continue;
     }
 
