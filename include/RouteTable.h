@@ -16,6 +16,10 @@ class RouteTable {
   /* add my Ip to the routeTable */
   void addMyRoutes(std::unordered_map<uint32_t, std::string> myIps);
   
+	/* Search an entry in the Route Table with Highest Priority on basis of 
+																															network address */
+	RouteEntry searchHighestPriority(uint32_t);
+	
   /* Search an entry in the Route Table on basis of network address */
   RouteEntry * search(uint32_t);
 	
@@ -66,5 +70,6 @@ class RouteTable {
   routeTableMap_ routeTable_;
   int kernelSocketFd_;
   /* Function to update kernel routing table */
-  void updateKernelRouteTable(RouteEntry);
+  void addKernelRouteTable(RouteEntry);
+	void removeKernelRouteTable(RouteEntry);
 };

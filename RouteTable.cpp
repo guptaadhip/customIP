@@ -21,9 +21,12 @@ RouteTable::RouteTable() {
 
 void RouteTable::insert(RouteEntry entry) {
 	auto check = routeTable_.find(entry.getNwAddress());
+	
 	if(check == routeTable_.cend()) {
   	routeTable_.insert(routeTableMap_::value_type(entry.getNwAddress(), entry));
-  	updateKernelRouteTable(entry);
+		if(entry.getPriority() == RoutePriority::LOCAL){
+			addKernelRouteTable(entry);
+		}
 	}else{ //if the key  exists , check if the that entry exists
 		auto elements = routeTable_.equal_range(entry.getNwAddress());
 		bool flag = true;
@@ -41,11 +44,35 @@ void RouteTable::insert(RouteEntry entry) {
 		
 		if(flag){
 			routeTable_.insert(routeTableMap_::value_type(entry.getNwAddress(), entry));
-			updateKernelRouteTable(entry);
+		}
+		
+		auto previousEntry = searchHighestPriority(entry.getNwAddress());
+		if(previousEntry.getNwAddress() != 0 && previousEntry.getPriority() > entry.getPriority()){
+			removeKernelRouteTable(previousEntry);
+			addKernelRouteTable(entry);
 		}
 	}
 }
 
+/* Search an entry in the Route Table with Highest Priority on basis of network 
+																																			address */
+RouteEntry RouteTable::searchHighestPriority(uint32_t address){
+	auto elements = routeTable_.equal_range(address);
+	auto entry = elements.first->second;
+	
+  if (elements.first == elements.second) {
+    return entry;
+  } else {
+		for (auto element = elements.first; element != elements.second; ++element) {
+			if(entry.getNwAddress() == 0){
+				entry = element->second;
+			}else if(entry.getPriority() < element->second.getPriority()){
+				entry = element->second;
+			}
+		}
+		return entry;
+  }
+}
 /* Search an entry in the Route Table on basis of network address */
 RouteEntry * RouteTable::search(uint32_t address) {
 	auto elements = routeTable_.equal_range(address);
@@ -262,8 +289,44 @@ void RouteTable::printRouteTable() {
 	}
 }
 
-/* Update the kernel routing table */
-void RouteTable::updateKernelRouteTable(RouteEntry entry) {
+/* Add the kernel routing table entry */
+void RouteTable::addKernelRouteTable(RouteEntry entry) {
+  struct rtentry kRouteEntry;
+	
+  bzero(&kRouteEntry, sizeof(kRouteEntry));
+	
+  /* setting the next hop */
+  ((struct sockaddr_in *) &kRouteEntry.rt_gateway)->sin_family = AF_INET;
+  ((struct sockaddr_in *) &kRouteEntry.rt_gateway)->sin_addr.s_addr = entry.getNextHop();
+  
+  /* setting the network address */
+  ((struct sockaddr_in *) &kRouteEntry.rt_dst)->sin_family = AF_INET;
+  ((struct sockaddr_in *) &kRouteEntry.rt_dst)->sin_addr.s_addr = entry.getNwAddress();
+  
+  /* setting the subnet mask */
+  ((struct sockaddr_in *) &kRouteEntry.rt_genmask)->sin_family = AF_INET;
+  ((struct sockaddr_in *) &kRouteEntry.rt_genmask)->sin_addr.s_addr = entry.getSubnetMask();
+
+  /* set the metric */
+  kRouteEntry.rt_metric = (short) entry.getPriority();
+  /* setting the interface */
+  kRouteEntry.rt_dev = (char *) entry.getInterface().c_str();
+  
+  /* settin flags for Routing table */
+  if (entry.getNextHop() == 0x0) {
+    kRouteEntry.rt_flags = RTF_UP;
+  } else {
+    kRouteEntry.rt_flags = RTF_UP | RTF_GATEWAY;
+  }
+
+  /* adding the entry to the routing table */
+  if (ioctl(kernelSocketFd_	, SIOCADDRT, &kRouteEntry) < 0) {
+    //cout << "Route Table: Error in setting the kernel table" << endl;
+  }
+}
+
+/* Remove the kernel routing table entry */
+void RouteTable::removeKernelRouteTable(RouteEntry entry) {
   struct rtentry kRouteEntry;
 	
   bzero(&kRouteEntry, sizeof(kRouteEntry));
