@@ -57,17 +57,18 @@ void RouteTable::insert(RouteEntry entry) {
 RouteEntry RouteTable::searchHighestPriority(uint32_t address){
 	auto elements = routeTable_.equal_range(address);
 	
-     if(elements.first != elements.second){			
-	auto entry = elements.first->second;
-	for (auto element = elements.first; element != elements.second; ++element) {
-		if(entry.getPriority() > element->second.getPriority()){
-			entry = element->second;	
+  if(elements.first != elements.second){			
+		auto entry = elements.first->second;
+		for (auto element = elements.first; element != elements.second; ++element) {
+			if(entry.getPriority() > element->second.getPriority()){
+				entry = element->second;	
+			}
 		}
-	}
-	return entry;
-     }
-     RouteEntry temp;
-     return temp;
+		return entry;
+  }
+  
+	RouteEntry temp;
+  return temp;
 }
 
 /* Search an entry in the Route Table on basis of network address */
@@ -165,8 +166,6 @@ std::vector<RouteEntry> RouteTable::removeEntries(uint32_t nextHop){
 		if (mapIterator->second.getNextHop() == nextHop){
 				/* Push the removing entry into Vector */
 				returnList.push_back(mapIterator->second);
-				/* Remove entry from kernel */
-				removeKernelRouteTable(mapIterator->second);
 				/* Erase entry from Map */
 				routeTable_.erase(mapIterator++);
     }else{
@@ -178,9 +177,11 @@ std::vector<RouteEntry> RouteTable::removeEntries(uint32_t nextHop){
                                                           basis of address */
 	for(auto entry : returnList){
 		auto element = searchHighestPriority(entry.getNwAddress());
-                if (element.getNwAddress() != 0) {
+    if (element.getNwAddress() != 0) {
 		  addKernelRouteTable(element);
-                }
+    }
+		/* Remove entry from kernel */
+		removeKernelRouteTable(entry);
 	}
 	
 	return returnList;
@@ -197,8 +198,6 @@ std::vector<RouteEntry> RouteTable::removeEntry(uint32_t address,
 				&& mapIterator->second.getNextHop() == nextHop){
 				/* Push the removing entry into Vector */
 				returnList.push_back(mapIterator->second);
-				/* Remove entry from kernel */
-				removeKernelRouteTable(mapIterator->second);
 				/* Erase entry from Map */
 				routeTable_.erase(mapIterator++);
 		}else{
@@ -208,9 +207,14 @@ std::vector<RouteEntry> RouteTable::removeEntry(uint32_t address,
 	
 	/* Add the next highest priority entry on basis of address */
 	auto entry = searchHighestPriority(address);
-        if (entry.getNwAddress() != 0) {
+  if (entry.getNwAddress() != 0) {
 	  addKernelRouteTable(entry);
-        }
+  }
+	
+	for(auto element : returnList){
+		/* Remove entry from kernel */
+		removeKernelRouteTable(element);
+	}
 	
 	return returnList;
 }

@@ -116,7 +116,7 @@ void CustomOspf::sendInfo(uint32_t addr) {
     bzero((char *) buffer, sizeof(buffer));
     
     /* Strike = 3! Executing delete sequence */ 
-    if (strikeCount == 3) {
+    if (strikeCount == 3 && neighborStatus_[addr] == false) {
         std::cout << "My link is down to addr: " << addr << std::endl;
 	/* Time to send delete message */
 
