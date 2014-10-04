@@ -6,7 +6,7 @@
 
 using namespace std;
 
-static const uint32_t MAX_PING = 254; // Maximum number of neighbours to ping
+static const uint32_t MAX_PING = 4; // Maximum number of neighbours to ping
 
 NetworkHandler::NetworkHandler(MyIp *myIps,PacketEngine *packetEngine) {
 	_myIps = myIps;

@@ -118,7 +118,7 @@ void PacketEngine::responsePacket(const u_char *packet, IcmpResponse type) {
   auto rc = sendto(socketFd_, tempPacket, ipLen, 0, (struct sockaddr *)&dest,
                    sizeof(struct sockaddr));
   if (rc < 0) {
-  	cout << "Sending the ICMP Response failed!" << endl;
+  	cout << "Sending the ICMP Response failed!!" << endl;
     exit(1);
   }
 }
@@ -168,7 +168,7 @@ void PacketEngine::sendPing(const uint32_t srcAddr, const uint32_t dstAddr) {
   auto rc = sendto(socketFd_, pingPacket, PING_PACKET_LEN, 0, 
   								(struct sockaddr *)&dest, sizeof(struct sockaddr));
   if (rc < 0) {
-  	cout << "Sending the ICMP Response failed!" << endl;
+  	cout << "Sending the ICMP Send failed!" << endl;
     exit(1);
   }
 }
