@@ -40,5 +40,4 @@ class CustomOspf {
   std::thread receiver_;
   std::thread sender_;
   std::thread sender2_;
-  int sendSocket_;
 };

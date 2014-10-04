@@ -19,12 +19,6 @@ CustomOspf::CustomOspf(RouteTable *routeTable, uint32_t rtr1, uint32_t rtr2)
   routeTable_ = routeTable;
   getMyIpInfo();
 
-  /* Creating the Internet domain socket */
-  sendSocket_ = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
-  if (sendSocket_ < 0) {
-    std::cout << "Custom OSPF: Error sendSocket creation failed" << std::endl;
-    exit(1);
-  }
 
   /* Initialzing neighbour status */
   neighborStatus_[rtr1_] = false;
@@ -204,24 +198,8 @@ void CustomOspf::sendInfo(uint32_t addr) {
 }
 
 void CustomOspf::sendUpdate(char *buffer, uint32_t addr) {
-  struct sockaddr_in serverAddr;
-  struct hostent *server;
-  socklen_t serverAddrLength;
   
-  /* zeroing the address structures Good Practice*/
-  bzero((char *) &serverAddr, sizeof(serverAddr));
-  
-  /* Set server address values */
-  serverAddr.sin_family = AF_INET;
-  serverAddr.sin_addr.s_addr = addr;
-  serverAddr.sin_port = htons(OSPF_PORT);
-  serverAddrLength = sizeof(serverAddr);
 
-  auto rc = sendto(sendSocket_, buffer, BUFLEN, 0,
-                      (struct sockaddr *) &serverAddr, serverAddrLength);
-  if (rc < 0) {  
-    std::cout << "Custom OSPF: Error Sending Update Data" << std::endl;
-  } 
 }
 
 void CustomOspf::recvInfo() {
@@ -229,7 +207,19 @@ void CustomOspf::recvInfo() {
   struct sockaddr_in clientAddr, serverAddr;
   char buffer[BUFLEN];
   socklen_t clientAddrLength;
+  struct sockaddr_in neighborAddr;
+  socklen_t neighborAddrLength;
+  int sendSocket;
+
+
+  /* Creating the Internet domain socket */
+  sendSocket = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+  if (sendSocket < 0) {
+    std::cout << "Custom OSPF: Error sendSocket creation failed" << std::endl;
+    exit(1);
+  }
   
+ 
   /* Creating the Internet domain socket */
   auto socketFd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
   if (socketFd < 0) {
@@ -309,7 +299,7 @@ void CustomOspf::recvInfo() {
     routeTable_->printRouteTable();
     std::cout << std::endl;
     
-    if (ospfType == OspfMsgType::ADD) {
+   if (ospfType == OspfMsgType::ADD) {
       std::cout << "Sending cascaded Add" << std::endl;
       uint32_t temp = (uint32_t) OspfMsgType::CASCADED_ADD;
       bcopy(&temp, buffer, sizeof(uint32_t));
@@ -320,11 +310,26 @@ void CustomOspf::recvInfo() {
     }
     if (ospfType == OspfMsgType::ADD || ospfType == OspfMsgType::DELETE) {
       std::cout << "Sending cascaded update" << std::endl;
-      if (clientAddr.sin_addr.s_addr == rtr1_) {
-        sendUpdate(buffer, rtr2_);
+      
+      /* zeroing the address structures Good Practice*/
+      bzero((char *) &neighborAddr, sizeof(neighborAddr));
+      
+      neighborAddr.sin_family = AF_INET;
+      neighborAddr.sin_port = htons(OSPF_PORT);
+      neighborAddrLength = sizeof(serverAddr);
+
+      if (clientAddr.sin_addr.s_addr == rtr1_) { 
+        /* Set server address values */
+        neighborAddr.sin_addr.s_addr = rtr2_;
       } else {
-        sendUpdate(buffer, rtr1_);
+        /* Set server address values */
+        neighborAddr.sin_addr.s_addr = rtr1_;
       }
+      auto rc = sendto(sendSocket, buffer, BUFLEN, 0,
+                      (struct sockaddr *) &neighborAddr, neighborAddrLength);
+      if (rc < 0) {  
+        std::cout << "Custom OSPF: Error Sending Update Data" << std::endl;
+      } 
     }
   }
 }
