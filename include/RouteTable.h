@@ -40,27 +40,10 @@ class RouteTable {
   void remove(uint32_t);
 
 	/* Remove an entry in the Route Table on basis of next hop */
-	void removeEntry(uint32_t);
-	
-	/* Remove an entry in the Route Table on basis of next hop and interface */
-	void removeEntry(uint32_t,std::string);
-	
-	/* Remove an entry in the Route Table on basis of network address, next hop and interface */
-	void removeEntry(uint32_t,uint32_t,std::string);
-	
-	/* Remove an entry in the Route Table on basis of priority */
-	void removeEntry(RoutePriority);
-
-	/* Remove an entry in the Route Table on basis of network address & priority */
-	void removeEntry(uint32_t, RoutePriority);
-	
-	/* Remove an entry in the Route Table on basis of network address, next hop, interface, priority */
-	void removeEntry(uint32_t,uint32_t,std::string,RoutePriority);
+	std::vector<RouteEntry> removeEntries(uint32_t);
 	
 	/* Remove an entry in the Route Table on basis of network address & next hop */
-	void removeEntry(uint32_t,uint32_t);
-	
-  void removeEntry(uint32_t, uint32_t, RoutePriority);
+	std::vector<RouteEntry> removeEntry(uint32_t,uint32_t);
 	
   /* just for debugging purposes need to be removed */
   void printRouteTable();
