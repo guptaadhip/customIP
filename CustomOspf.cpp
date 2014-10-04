@@ -216,9 +216,7 @@ void CustomOspf::sendInfo(uint32_t addr) {
        i += sizeof(uint32_t);
        for(auto entry : directEntries) {
          /* Adhip: Do not delete this */
-         auto it = std::find(ipVector_.begin(), ipVector_.end(), entry.getNextHop() & 0x00FFFFFF);
-         if ((it != ipVector_.end()) && 
-             (entry.getNwAddress() == (entry.getNextHop() & 0x00FFFFFF))) {
+         if (entry.getNextHop() == addr) {
            count = count - 1;
            bcopy(&count, (buffer + sizeof(uint32_t)), sizeof(uint32_t));
            continue;
