@@ -183,7 +183,7 @@ std::vector<RouteEntry> RouteTable::removeEntries(uint32_t nextHop){
 		/* Remove entry from kernel */
 		if(entry.getPriority() != RoutePriority::LOCAL){
 			cout << "Delete Kernel:" << entry.getNwAddress() << " :: " 
-																							<< entry.getNextHop()) << endl;
+																							<< entry.getNextHop() << endl;
 			removeKernelRouteTable(entry);
 		}
 	}
@@ -219,7 +219,7 @@ std::vector<RouteEntry> RouteTable::removeEntry(uint32_t address,
 		/* Remove entry from kernel */
 		if(element.getPriority() != RoutePriority::LOCAL){
 			cout << "Delete Kernel:" << element.getNwAddress() << " :: " 
-																							<< element.getNextHop()) << endl;
+																							<< element.getNextHop() << endl;
 			removeKernelRouteTable(element);
 		}
 	}
