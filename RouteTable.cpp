@@ -24,9 +24,7 @@ void RouteTable::insert(RouteEntry entry) {
 	
 	if(check == routeTable_.cend()) {
   	routeTable_.insert(routeTableMap_::value_type(entry.getNwAddress(), entry));
-		if(entry.getPriority() == RoutePriority::LOCAL){
-			addKernelRouteTable(entry);
-		}
+		addKernelRouteTable(entry);
 	}else{ //if the key  exists , check if the that entry exists
 		auto elements = routeTable_.equal_range(entry.getNwAddress());
 		bool flag = true;
@@ -47,7 +45,7 @@ void RouteTable::insert(RouteEntry entry) {
 		}
 		
 		auto previousEntry = searchHighestPriority(entry.getNwAddress());
-		if(previousEntry.getNwAddress() != 0 && previousEntry.getPriority() > entry.getPriority()){
+		if(flag && ((previousEntry.getNwAddress() != 0) && (previousEntry.getPriority() > entry.getPriority()))){
 			removeKernelRouteTable(previousEntry);
 			addKernelRouteTable(entry);
 		}
@@ -66,7 +64,7 @@ RouteEntry RouteTable::searchHighestPriority(uint32_t address){
 		for (auto element = elements.first; element != elements.second; ++element) {
 			if(entry.getNwAddress() == 0){
 				entry = element->second;
-			}else if(entry.getPriority() < element->second.getPriority()){
+			}else if(entry.getPriority() > element->second.getPriority()){
 				entry = element->second;
 			}
 		}
@@ -356,7 +354,7 @@ void RouteTable::removeKernelRouteTable(RouteEntry entry) {
   }
 
   /* adding the entry to the routing table */
-  if (ioctl(kernelSocketFd_	, SIOCADDRT, &kRouteEntry) < 0) {
+  if (ioctl(kernelSocketFd_	, SIOCDELRT, &kRouteEntry) < 0) {
     //cout << "Route Table: Error in setting the kernel table" << endl;
   }
 }
