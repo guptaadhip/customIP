@@ -6,7 +6,7 @@
 
 class RouteTable;
 
-#define OSPF_PORT 5000   //The port on which to listen for incoming data
+#define OSPF_PORT 50000   //The port on which to listen for incoming data
 #define BUFLEN 1024  //Max length of buffer
 
 

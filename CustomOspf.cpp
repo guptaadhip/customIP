@@ -62,10 +62,28 @@ void CustomOspf::getMyIpInfo() {
 void CustomOspf::sendInfo(uint32_t addr) {
   /* This sleep is needed */
   sleep(5);
+  struct sockaddr_in serverAddr;
+  socklen_t serverAddrLength;
   int strikeCount = 0;
   char buffer[BUFLEN];
   uint32_t ospfType;
   int routePriority;
+  int socketfd;
+
+  /* Creating the Internet domain socket */
+  socketfd = socket(AF_INET, SOCK_DGRAM, IPPROTO_UDP);
+  if (socketfd < 0) {
+    std::cout << "Custom OSPF: Error sendInfo Socket creation failed" << std::endl;
+    exit(1);
+  }
+
+  /* zeroing the address structures Good Practice*/
+  bzero((char *) &serverAddr, sizeof(serverAddr));
+  /* Set server address values */
+  serverAddr.sin_family = AF_INET;
+  serverAddr.sin_addr.s_addr = addr;
+  serverAddr.sin_port = htons(OSPF_PORT);
+  serverAddrLength = sizeof(serverAddr);
 
   /* get the data to send from user */
   bzero((char *) buffer, sizeof(buffer));
@@ -83,8 +101,13 @@ void CustomOspf::sendInfo(uint32_t addr) {
   }
   /* Initial message ready -> fill done lets send */
 
-  sendUpdate(buffer, addr);
+  auto rc = sendto(socketfd, buffer, BUFLEN, 0,
+                      (struct sockaddr *) &serverAddr, serverAddrLength);
+  if (rc < 0) {  
+    std::cout << "Custom OSPF: Error Sending Update Data" << std::endl;
+  } 
 
+  return;
   while(true) {
     sleep(1);
     
@@ -202,6 +225,7 @@ void CustomOspf::sendUpdate(char *buffer, uint32_t addr) {
 }
 
 void CustomOspf::recvInfo() {
+  int yes = 1;
   struct sockaddr_in clientAddr, serverAddr;
   char buffer[BUFLEN];
   socklen_t clientAddrLength;
@@ -217,15 +241,21 @@ void CustomOspf::recvInfo() {
   serverAddr.sin_family = AF_INET;
   serverAddr.sin_addr.s_addr = INADDR_ANY;
   serverAddr.sin_port = htons(OSPF_PORT);
+  
+  if ( setsockopt(socketFd, SOL_SOCKET, SO_REUSEADDR, &yes, sizeof(int)) == -1 ) {
+    std::cout << "Custom OSPF: Error setting socket option" << std::endl;
+    exit(1);
+  }
+
   if (bind(socketFd, (struct sockaddr *) &serverAddr, sizeof(serverAddr)) < 0) {
     std::cout << "Custom OSPF: Error binding to socket" << std::endl;
-    exit(0);
+    exit(1);
   }
 
   clientAddrLength = sizeof(clientAddr);
   while (true) {
     /* receive any UDP packets on the port */
-    auto rc = recvfrom(socketFd, buffer, 1024, 0, (struct sockaddr *)&clientAddr, 
+    auto rc = recvfrom(socketFd, buffer, BUFLEN, 0, (struct sockaddr *)&clientAddr, 
                                                             &clientAddrLength);
     if (rc < 0) {
       std::cout << "Custom OSPF: Error Receiving Data" << std::endl;
@@ -235,7 +265,8 @@ void CustomOspf::recvInfo() {
 
     /* I just received a message -> So update the status to true */
     neighborStatus_[clientAddr.sin_addr.s_addr] = true;
-
+    /* TBD: Remove */
+    std::cout << "Got a message from: " << clientAddr.sin_addr.s_addr << std::endl;
     OspfMsgType ospfType;
     bcopy(buffer, &ospfType, sizeof(uint32_t));
     /* do the stuff for hello */
@@ -277,21 +308,18 @@ void CustomOspf::recvInfo() {
     std::cout << "Printing Route Table: " << std::endl;
     routeTable_->printRouteTable();
     std::cout << std::endl;
-
+    
     if (ospfType == OspfMsgType::ADD) {
       std::cout << "Sending cascaded Add" << std::endl;
       uint32_t temp = (uint32_t) OspfMsgType::CASCADED_ADD;
-      /* update the type */
       bcopy(&temp, buffer, sizeof(uint32_t));
     } else if (ospfType == OspfMsgType::DELETE) {
       std::cout << "Sending cascaded Delete" << std::endl;
       uint32_t temp = (uint32_t) OspfMsgType::CASCADED_DELETE;
-      /* update the type */
       bcopy(&temp, buffer, sizeof(uint32_t));
     }
     if (ospfType == OspfMsgType::ADD || ospfType == OspfMsgType::DELETE) {
       std::cout << "Sending cascaded update" << std::endl;
-      /* send on the interface from where the update was not received */
       if (clientAddr.sin_addr.s_addr == rtr1_) {
         sendUpdate(buffer, rtr2_);
       } else {
