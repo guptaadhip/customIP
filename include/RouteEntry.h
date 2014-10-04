@@ -20,7 +20,6 @@ class RouteEntry {
   RouteEntry() {
     nwAddress_ = 0;
     subnetMask_ = 0;
-    interface_ = nullptr;
     nextHop_ = 0;
     priority_ = RoutePriority::LOCAL;
   }

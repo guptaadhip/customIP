@@ -18,7 +18,7 @@ class RouteTable {
   
 	/* Search an entry in the Route Table with Highest Priority on basis of 
 																															network address */
-	RouteEntry searchHighestPriority(uint32_t);
+	RouteEntry  searchHighestPriority(uint32_t);
 	
   /* Search an entry in the Route Table on basis of network address */
   RouteEntry * search(uint32_t);

@@ -114,16 +114,27 @@ void CustomOspf::sendInfo(uint32_t addr) {
     
     /* Strike = 3! Executing delete sequence */ 
     if(strikeCount == 3) {
-        std::cout << "My link is down to addr" << addr;
+        std::cout << "My link is down to addr: " << addr << std::endl;
 	/* Time to send delete message */
 
 	/* Step 1: Get all entries with addr as next hop 
 	*  and also delete them.
 	*/
-       // auto deleteEntries = removeEntry(addr);
+        auto deleteEntries = routeTable_->removeEntries(addr);
+
+
+        if (addr == rtr1_) { 
+          /* Set server address values */
+          serverAddr.sin_addr.s_addr = rtr2_;
+          serverAddrLength = sizeof(serverAddr);
+        } else {
+          /* Set server address values */
+          serverAddr.sin_addr.s_addr = rtr1_;
+          serverAddrLength = sizeof(serverAddr);
+        }
 	
 	/* Step 2 : Fill buffer with all the entries */	
-  	/*ospfType = (uint32_t) OspfMsgType::DELETE; 
+  	ospfType = (uint32_t) OspfMsgType::DELETE; 
  	bcopy(&ospfType, buffer, sizeof(uint32_t));
   	int i = sizeof(uint32_t);
   	uint32_t count = deleteEntries.size();
@@ -133,16 +144,26 @@ void CustomOspf::sendInfo(uint32_t addr) {
     	  uint32_t networkIP = entry.getNwAddress();
     	  bcopy(&networkIP, (buffer + i), sizeof(uint32_t));
     	  i += sizeof(uint32_t);
-	}*/
+	}
+        std::cout << "Printing Route Table After Del: " << std::endl;
+        routeTable_->printRouteTable();
+        std::cout << std::endl;
 	/* Delete message's buffer ready. */ 
+        auto rc = sendto(socketfd, buffer, BUFLEN, 0,
+                      (struct sockaddr *) &serverAddr, serverAddrLength);
+        if (rc < 0) {  
+          std::cout << "Custom OSPF: Error Sending Update Data" << std::endl;
+       } 
+       neighborStatus_[addr] = false;
+       continue;
     }
     
     /* Line came back up! We are back in the game */
     if(neighborStatus_[addr] == true && strikeCount > 3) {
-	strikeCount = 0;
-	
-        std::cout << "My link is up to addr" << addr;
-	/* Time to send link up message */
+       strikeCount = 0;
+       std::cout << "My link is up to addr" << addr;
+       neighborStatus_[addr] = false;
+       continue;
 	
     }
     
@@ -212,14 +233,11 @@ void CustomOspf::recvInfo() {
 
     /* I just received a message -> So update the status to true */
     neighborStatus_[clientAddr.sin_addr.s_addr] = true;
-    /* TBD: Remove */
-    std::cout << "Got a message from: " << clientAddr.sin_addr.s_addr << std::endl;
     OspfMsgType ospfType;
     bcopy(buffer, &ospfType, sizeof(uint32_t));
     /* do the stuff for hello */
     if (ospfType == OspfMsgType::HELLO) {
       /* no need to go further */
-      std::cout << "Got Hello!!! yello!!!" << std::endl;
       continue;
     }
 
@@ -232,7 +250,7 @@ void CustomOspf::recvInfo() {
       bcopy((buffer + bufPtr), &networkAddr, sizeof(uint32_t));
       std::cout << "Network Address: " << networkAddr << std::endl;
       if (ospfType == OspfMsgType::ADD || ospfType == OspfMsgType::CASCADED_ADD) {
-				if(ospfType == OspfMsgType::CASCADED_ADD) {
+        if(ospfType == OspfMsgType::CASCADED_ADD) {
           priority = RoutePriority::CASCADED;
         } else {
           priority = RoutePriority::DIRECT;
@@ -243,13 +261,8 @@ void CustomOspf::recvInfo() {
                                       localRoute[0].getInterface(), priority);
         routeTable_->insert(route);     
       } else {
-				if(ospfType == OspfMsgType::CASCADED_DELETE) {
-          priority = RoutePriority::CASCADED;
-        } else {
-          priority = RoutePriority::DIRECT;
-        }
         /* Delete */
-        routeTable_->removeEntry(networkAddr, clientAddr.sin_addr.s_addr, priority);
+        routeTable_->removeEntry(networkAddr, clientAddr.sin_addr.s_addr);
       }
       bufPtr = bufPtr + sizeof(uint32_t);
     }
@@ -274,14 +287,15 @@ void CustomOspf::recvInfo() {
       
       neighborAddr.sin_family = AF_INET;
       neighborAddr.sin_port = htons(OSPF_PORT);
-      neighborAddrLength = sizeof(serverAddr);
 
       if (clientAddr.sin_addr.s_addr == rtr1_) { 
         /* Set server address values */
         neighborAddr.sin_addr.s_addr = rtr2_;
+        neighborAddrLength = sizeof(serverAddr);
       } else {
         /* Set server address values */
         neighborAddr.sin_addr.s_addr = rtr1_;
+        neighborAddrLength = sizeof(serverAddr);
       }
       auto rc = sendto(sendSocket, buffer, BUFLEN, 0,
                       (struct sockaddr *) &neighborAddr, neighborAddrLength);

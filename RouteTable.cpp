@@ -45,7 +45,7 @@ void RouteTable::insert(RouteEntry entry) {
 		}
 		
 		auto previousEntry = searchHighestPriority(entry.getNwAddress());
-		if(flag && ((previousEntry.getNwAddress() != 0) && (previousEntry.getPriority() > entry.getPriority()))){
+		if(flag &&  ((previousEntry.getNwAddress() != 0) && (previousEntry.getPriority() > entry.getPriority()))){
 			removeKernelRouteTable(previousEntry);
 			addKernelRouteTable(entry);
 		}
@@ -56,21 +56,20 @@ void RouteTable::insert(RouteEntry entry) {
 																																			address */
 RouteEntry RouteTable::searchHighestPriority(uint32_t address){
 	auto elements = routeTable_.equal_range(address);
-	auto entry = elements.first->second;
 	
-  if (elements.first == elements.second) {
-    return entry;
-  } else {
-		for (auto element = elements.first; element != elements.second; ++element) {
-			if(entry.getNwAddress() == 0){
-				entry = element->second;
-			}else if(entry.getPriority() > element->second.getPriority()){
-				entry = element->second;
-			}
+     if(elements.first != elements.second){			
+	auto entry = elements.first->second;
+	for (auto element = elements.first; element != elements.second; ++element) {
+		if(entry.getPriority() > element->second.getPriority()){
+			entry = element->second;	
 		}
-		return entry;
-  }
+	}
+	return entry;
+     }
+     RouteEntry temp;
+     return temp;
 }
+
 /* Search an entry in the Route Table on basis of network address */
 RouteEntry * RouteTable::search(uint32_t address) {
 	auto elements = routeTable_.equal_range(address);
@@ -179,7 +178,9 @@ std::vector<RouteEntry> RouteTable::removeEntries(uint32_t nextHop){
                                                           basis of address */
 	for(auto entry : returnList){
 		auto element = searchHighestPriority(entry.getNwAddress());
-		addKernelRouteTable(element);
+                if (element.getNwAddress() != 0) {
+		  addKernelRouteTable(element);
+                }
 	}
 	
 	return returnList;
@@ -207,7 +208,9 @@ std::vector<RouteEntry> RouteTable::removeEntry(uint32_t address,
 	
 	/* Add the next highest priority entry on basis of address */
 	auto entry = searchHighestPriority(address);
-	addKernelRouteTable(entry);
+        if (entry.getNwAddress() != 0) {
+	  addKernelRouteTable(entry);
+        }
 	
 	return returnList;
 }
