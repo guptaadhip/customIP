@@ -225,11 +225,12 @@ void RouteTable::printRouteTable() {
 																											++mapIterator){
 		auto temp = mapIterator->second;
 		dest.sin_addr.s_addr = temp.getNwAddress();
-		cout << inet_ntoa(dest.sin_addr) << "\t";
+		cout << inet_ntoa(dest.sin_addr) << " \t ";
 		dest.sin_addr.s_addr = temp.getNextHop();
-		cout << inet_ntoa(dest.sin_addr) << "\t"; 
+		cout << inet_ntoa(dest.sin_addr) << " \t "; 
 		dest.sin_addr.s_addr = temp.getSubnetMask();
-		cout << inet_ntoa(dest.sin_addr) << "\t"; 
+		cout << inet_ntoa(dest.sin_addr) << " \t "; 
+		cout << (uint32_t) temp.getPriority() << " \t "; 
 		cout << temp.getInterface() << endl;
 	}
 }

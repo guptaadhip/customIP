@@ -19,6 +19,7 @@ enum class OspfMsgType : uint32_t {
   DELETE = 8,
   CASCADED_ADD = 16,
   CASCADED_DELETE = 20,
+  ADD_LINKUP = 24,
 };
 
 class CustomOspf {
