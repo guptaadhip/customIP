@@ -118,8 +118,8 @@ void PacketEngine::responsePacket(const u_char *packet, IcmpResponse type) {
   auto rc = sendto(socketFd_, tempPacket, ipLen, 0, (struct sockaddr *)&dest,
                    sizeof(struct sockaddr));
   if (rc < 0) {
-  	cout << "Sending the ICMP Response failed!!" << endl;
-    exit(1);
+  	//cout << "Sending the ICMP Response failed!!" << endl;
+    //exit(1);
   }
 }
 

@@ -31,11 +31,12 @@ void RouteTable::insert(RouteEntry entry) {
     bool flag = true;
 		
     for (auto element = elements.first; element != elements.second; ++element) {	
-      if (element->second.getNwAddress() == entry.getNwAddress() 
-         && element->second.getSubnetMask() == entry.getSubnetMask() 
-         && element->second.getInterface() == entry.getInterface() 
-         && element->second.getPriority() == entry.getPriority() 
-         && element->second.getNextHop() == entry.getNextHop() ) {
+      if ((element->second.getNwAddress() == entry.getNwAddress()) 
+         && ( element->second.getSubnetMask() == entry.getSubnetMask()) 
+         && ( element->second.getInterface().compare(entry.getInterface()) == 0)
+				 //&& ( element->second.getInterface() == entry.getInterface() )
+         && ( element->second.getPriority() == entry.getPriority()) 
+         && ( element->second.getNextHop() == entry.getNextHop() )) {
 
          flag = false;
          break;
@@ -260,15 +261,18 @@ void RouteTable::addKernelRouteTable(RouteEntry entry) {
 	
   /* setting the next hop */
   ((struct sockaddr_in *) &kRouteEntry.rt_gateway)->sin_family = AF_INET;
-  ((struct sockaddr_in *) &kRouteEntry.rt_gateway)->sin_addr.s_addr = entry.getNextHop();
+  ((struct sockaddr_in *) &kRouteEntry.rt_gateway)->sin_addr.s_addr = 
+	                                                         entry.getNextHop();
   
   /* setting the network address */
   ((struct sockaddr_in *) &kRouteEntry.rt_dst)->sin_family = AF_INET;
-  ((struct sockaddr_in *) &kRouteEntry.rt_dst)->sin_addr.s_addr = entry.getNwAddress();
+  ((struct sockaddr_in *) &kRouteEntry.rt_dst)->sin_addr.s_addr =
+                                                         	entry.getNwAddress();
   
   /* setting the subnet mask */
   ((struct sockaddr_in *) &kRouteEntry.rt_genmask)->sin_family = AF_INET;
-  ((struct sockaddr_in *) &kRouteEntry.rt_genmask)->sin_addr.s_addr = entry.getSubnetMask();
+  ((struct sockaddr_in *) &kRouteEntry.rt_genmask)->sin_addr.s_addr = 
+	                                                       entry.getSubnetMask();
 
   /* set the metric */
   kRouteEntry.rt_metric = (short) entry.getPriority();
@@ -297,15 +301,18 @@ void RouteTable::removeKernelRouteTable(RouteEntry entry) {
 	
   /* setting the next hop */
   ((struct sockaddr_in *) &kRouteEntry.rt_gateway)->sin_family = AF_INET;
-  ((struct sockaddr_in *) &kRouteEntry.rt_gateway)->sin_addr.s_addr = entry.getNextHop();
+  ((struct sockaddr_in *) &kRouteEntry.rt_gateway)->sin_addr.s_addr = 
+                                                             entry.getNextHop();
   
   /* setting the network address */
   ((struct sockaddr_in *) &kRouteEntry.rt_dst)->sin_family = AF_INET;
-  ((struct sockaddr_in *) &kRouteEntry.rt_dst)->sin_addr.s_addr = entry.getNwAddress();
+  ((struct sockaddr_in *) &kRouteEntry.rt_dst)->sin_addr.s_addr = 
+	                                                         entry.getNwAddress();
   
   /* setting the subnet mask */
   ((struct sockaddr_in *) &kRouteEntry.rt_genmask)->sin_family = AF_INET;
-  ((struct sockaddr_in *) &kRouteEntry.rt_genmask)->sin_addr.s_addr = entry.getSubnetMask();
+  ((struct sockaddr_in *) &kRouteEntry.rt_genmask)->sin_addr.s_addr = 
+	                                                       entry.getSubnetMask();
 
   /* set the metric */
   kRouteEntry.rt_metric = (short) entry.getPriority();

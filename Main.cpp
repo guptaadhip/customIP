@@ -71,7 +71,7 @@ int main(int argv, char *args[]) {
   routeTable.addMyRoutes(myIps.getMyIps());
   /* get local network */
   NetworkHandler networkHandler(&myIps,&packetEngine);
-	//routeTable.printRouteTable();
+  //routeTable.printRouteTable();
 	
   /* OSPF needs to only start if the router has any neighbor routers */
   if (argv > 1) {
@@ -87,12 +87,13 @@ int main(int argv, char *args[]) {
     }
     CustomOspf ospf(&routeTable, rtr1, rtr2); 
     ospf.start();
-    /* this needs to be here or else ospf will go out of scope and core dump */
     for(auto entry : myIps.getMyIps()){
       threads.push_back(std::thread(startSniffing,entry.second));
     }
   
     for (auto& joinThreads : threads) joinThreads.join();
+    /* this needs to be here or else ospf will go out of scope and core dump */
+    return 0;
   }
 
   //Sniffer sniff("eth0");
