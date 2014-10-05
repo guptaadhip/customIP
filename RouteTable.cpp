@@ -330,6 +330,6 @@ void RouteTable::removeKernelRouteTable(RouteEntry entry) {
 	
   /* adding the entry to the routing table */
   if (ioctl(kernelSocketFd_, SIOCDELRT, &kRouteEntry) < 0) {
-    cout << "Route Table: Error in setting the kernel table" << endl;
+    //cout << "Route Table: Error in setting the kernel table" << endl;
   }
 }
