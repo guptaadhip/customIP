@@ -148,9 +148,9 @@ void CustomOspf::sendInfo(uint32_t addr) {
     	  bcopy(&networkIP, (buffer + i), sizeof(uint32_t));
     	  i += sizeof(uint32_t);
 	}
-        std::cout << "Printing Route Table After Del: " << std::endl;
-        routeTable_->printRouteTable();
-        std::cout << std::endl;
+        //std::cout << "Printing Route Table After Del: " << std::endl;
+        //routeTable_->printRouteTable();
+        //std::cout << std::endl;
 	/* Delete message's buffer ready. */ 
         auto rc = sendto(socketfd, buffer, BUFLEN, 0,
                       (struct sockaddr *) &serverAddr, serverAddrLength);
@@ -163,7 +163,7 @@ void CustomOspf::sendInfo(uint32_t addr) {
     
     /* Line came back up! We are back in the game */
     if (neighborStatus_[addr] == true && strikeCount >= 3) {
-       std::cout << "My link is up to addr: " << addr << std::endl;
+       //std::cout << "My link is up to addr: " << addr << std::endl;
        strikeCount = 0;
        serverAddr.sin_addr.s_addr = addr;
        serverAddrLength = sizeof(serverAddr);
@@ -177,7 +177,7 @@ void CustomOspf::sendInfo(uint32_t addr) {
        bcopy(&count, (buffer + i), sizeof(uint32_t));
        i += sizeof(uint32_t);
        for(auto entry : localEntries) {
-         std::cout << "Sending Local: " << entry.getNwAddress() << " :: " << (uint32_t) entry.getPriority() << std::endl;
+         //std::cout << "Sending Local: " << entry.getNwAddress() << " :: " << (uint32_t) entry.getPriority() << std::endl;
          uint32_t networkIP = entry.getNwAddress();
     	 bcopy(&networkIP, (buffer + i), sizeof(uint32_t));
     	 i += sizeof(uint32_t);
@@ -222,7 +222,7 @@ void CustomOspf::sendInfo(uint32_t addr) {
            continue;
          } 
          uint32_t networkIP = entry.getNwAddress();
-         std::cout << "Sending Direct: " << entry.getNwAddress() << " :: " << (uint32_t) entry.getPriority() << std::endl;
+         //std::cout << "Sending Direct: " << entry.getNwAddress() << " :: " << (uint32_t) entry.getPriority() << std::endl;
     	 bcopy(&networkIP, (buffer + i), sizeof(uint32_t));
     	 i += sizeof(uint32_t);
        }
@@ -319,7 +319,7 @@ void CustomOspf::recvInfo() {
       uint32_t networkAddr;
       RoutePriority priority;
       bcopy((buffer + bufPtr), &networkAddr, sizeof(uint32_t));
-      std::cout << "Network Address: " << networkAddr << std::endl;
+      //std::cout << "Network Address: " << networkAddr << std::endl;
       if (ospfType == OspfMsgType::ADD || ospfType == OspfMsgType::CASCADED_ADD) {
         if(ospfType == OspfMsgType::CASCADED_ADD) {
           priority = RoutePriority::CASCADED;
@@ -336,17 +336,17 @@ void CustomOspf::recvInfo() {
       }
       bufPtr = bufPtr + sizeof(uint32_t);
     }
-    std::cout << "Printing Route Table: " << std::endl;
-    routeTable_->printRouteTable();
-    std::cout << std::endl;
+    //std::cout << "Printing Route Table: " << std::endl;
+    //routeTable_->printRouteTable();
+    //std::cout << std::endl;
     
    if (ospfType == OspfMsgType::ADD) {
-      std::cout << "Sending cascaded Add" << std::endl;
+      //std::cout << "Sending cascaded Add" << std::endl;
       uint32_t temp = (uint32_t) OspfMsgType::CASCADED_ADD;
       bcopy(&temp, buffer, sizeof(uint32_t));
     }
     if (ospfType == OspfMsgType::ADD) {
-      std::cout << "Sending cascaded update" << std::endl;
+      //std::cout << "Sending cascaded update" << std::endl;
       
       /* zeroing the address structures Good Practice*/
       bzero((char *) &neighborAddr, sizeof(neighborAddr));

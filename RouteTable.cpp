@@ -24,7 +24,7 @@ void RouteTable::insert(RouteEntry entry) {
 	
   if(check == routeTable_.cend()) {
     routeTable_.insert(routeTableMap_::value_type(entry.getNwAddress(), entry));
-		cout << "Added-1::: " << entry.getNwAddress() << endl;
+		//cout << "Added-1::: " << entry.getNwAddress() << endl;
     addKernelRouteTable(entry);
   } else { //if the key  exists , check if the that entry exists
     auto elements = routeTable_.equal_range(entry.getNwAddress());
@@ -46,9 +46,9 @@ void RouteTable::insert(RouteEntry entry) {
 		auto previousEntry = searchHighestPriority(entry.getNwAddress());
 		if(previousEntry.getNwAddress() != 0){
 			if(previousEntry.getPriority() > entry.getPriority()) {
-				cout << "Deleted-1::: " << previousEntry.getNwAddress() << endl;
+				//cout << "Deleted-1::: " << previousEntry.getNwAddress() << endl;
 				removeKernelRouteTable(previousEntry);
-				cout << "Added-2::: " << entry.getNwAddress() << endl;
+				//cout << "Added-2::: " << entry.getNwAddress() << endl;
 				addKernelRouteTable(entry);
 			}
 		}
@@ -184,12 +184,12 @@ std::vector<RouteEntry> RouteTable::removeEntries(uint32_t nextHop){
 	for(auto entry : returnList){
 		auto element = searchHighestPriority(entry.getNwAddress());
     if (element.getNwAddress() != 0) {
-			cout << "Added-3::: " << element.getNwAddress() << endl;
+			//cout << "Added-3::: " << element.getNwAddress() << endl;
 		  addKernelRouteTable(element);
     }
 		/* Remove entry from kernel */
 		if(entry.getPriority() != RoutePriority::LOCAL){
-			cout << "Deleted-2::: " << entry.getNwAddress() << endl;
+			//cout << "Deleted-2::: " << entry.getNwAddress() << endl;
 			removeKernelRouteTable(entry);
 		}
 	}
@@ -218,14 +218,14 @@ std::vector<RouteEntry> RouteTable::removeEntry(uint32_t address,
 	/* Add the next highest priority entry on basis of address */
 	auto entry = searchHighestPriority(address);
   if (entry.getNwAddress() != 0) {
-		cout << "Added-4::: " << entry.getNwAddress() << endl;
+		//cout << "Added-4::: " << entry.getNwAddress() << endl;
 	  addKernelRouteTable(entry);
   }
 	
 	for(auto element : returnList){
 		/* Remove entry from kernel */
 		if(element.getPriority() != RoutePriority::LOCAL){
-			cout << "Deleted-3::: " << element.getNwAddress() << endl;
+			//cout << "Deleted-3::: " << element.getNwAddress() << endl;
 			removeKernelRouteTable(element);
 		}
 	}
@@ -294,7 +294,7 @@ void RouteTable::addKernelRouteTable(RouteEntry entry) {
 
 /* Remove the kernel routing table entry */
 void RouteTable::removeKernelRouteTable(RouteEntry entry) {
-  cout << "Delete Kernel:" << entry.getNwAddress() << " :: " << entry.getNextHop() << endl;
+  //cout << "Delete Kernel:" << entry.getNwAddress() << " :: " << entry.getNextHop() << endl;
   struct rtentry kRouteEntry;
 	
   bzero(&kRouteEntry, sizeof(kRouteEntry));
@@ -326,7 +326,7 @@ void RouteTable::removeKernelRouteTable(RouteEntry entry) {
     kRouteEntry.rt_flags = RTF_UP | RTF_GATEWAY;
   }
 	
-	cout << entry.getNwAddress() << " : " << entry.getNextHop() << " : " << entry.getSubnetMask() << " : " << entry.getInterface() << endl;
+	//cout << entry.getNwAddress() << " : " << entry.getNextHop() << " : " << entry.getSubnetMask() << " : " << entry.getInterface() << endl;
 	
   /* adding the entry to the routing table */
   if (ioctl(kernelSocketFd_, SIOCDELRT, &kRouteEntry) < 0) {
