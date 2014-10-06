@@ -163,6 +163,16 @@ void RouteTable::remove(uint32_t address) {
   routeTable_.erase(address);
 }
 
+/* Remove all entries in the Route Table and Kernel Table */
+void RouteTable::emptyTable() {
+	routeTableMap_::iterator mapIterator;
+	for (mapIterator = routeTable_.begin(); mapIterator!= routeTable_.end();){
+		removeKernelRouteTable(mapIterator->second);
+		/* Erase entry from Map */
+		routeTable_.erase(mapIterator++);
+	}
+}
+
 /* Remove an entry in the Route Table on basis of next hop */
 std::vector<RouteEntry> RouteTable::removeEntries(uint32_t nextHop){
 	routeTableMap_::iterator mapIterator;

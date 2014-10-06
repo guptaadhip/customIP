@@ -11,6 +11,9 @@
 #include <functional>
 #include <thread>
 
+#include <signal.h>
+#include <sys/wait.h>
+
 using namespace std;
 
 /* global Route table */
@@ -18,6 +21,12 @@ RouteTable routeTable;
 /* Self Ip address */
 MyIp myIps;
 PacketEngine packetEngine;
+
+void handleKill(int i, siginfo_t *info, void *dummy){
+	routeTable.emptyTable();
+	printf("Gracefully Exiting!\n");
+	exit(1);
+}
 
 void callbackHandler(u_char *args, const struct pcap_pkthdr* pkthdr,
                                                         const u_char* packet) {
@@ -67,6 +76,13 @@ int main(int argv, char *args[]) {
   std::vector<std::thread> threads;
   uint32_t rtr1, rtr2;
 
+	/* Added to parent process on Ctrl+C  */
+	struct sigaction act;
+	act.sa_sigaction= &handleKill;
+	sigemptyset(&act.sa_mask);
+	act.sa_flags=SA_SIGINFO;
+	sigaction(SIGINT, &act, NULL);
+	
   packetEngine.setMyIps(myIps);
   routeTable.addMyRoutes(myIps.getMyIps());
   /* get local network */

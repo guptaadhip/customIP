@@ -39,6 +39,9 @@ class RouteTable {
   /* Remove all entry in the Route Table on basis of network address */
   void remove(uint32_t);
 
+	/* Remove all entries in the Route Table and Kernel Table */
+	void emptyTable();
+	
 	/* Remove an entry in the Route Table on basis of next hop */
 	std::vector<RouteEntry> removeEntries(uint32_t);
 	
